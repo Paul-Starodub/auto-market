@@ -18,6 +18,9 @@ class Customer(Base):
         String(200), nullable=True, default=None
     )
 
+    profile: Mapped["Profile"] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
     cars: Mapped[list["CustomerCar"]] = relationship(
         back_populates="customer", cascade="all, delete-orphan"
     )
