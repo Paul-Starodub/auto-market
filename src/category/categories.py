@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.category import crud, schemas
@@ -30,20 +30,33 @@ async def get_categories(
 
 
 @router.get("/{category_id}/", response_model=Category)
-async def get_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
-    category = await crud.get_category(db=db, category_id=category_id)
-    if category is not None:
-        return category
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+async def get_category_route(
+    db: Annotated[AsyncSession, Depends(get_db)], category_id: int
+):
+    return await crud.get_category(db=db, category_id=category_id)
 
 
 @router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
-async def create_category(db: Annotated[AsyncSession, Depends(get_db)], category_create: schemas.CategoryCreate):
+async def create_category(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    category_create: schemas.CategoryCreate,
+):
     return await crud.create_category(db=db, category_create=category_create)
 
 
 @router.put("/{category_id}/", response_model=Category)
 async def update_category(
-    db: Annotated[AsyncSession, Depends(get_db)], category_id: int, category_update: schemas.CategoryUpdate
+    db: Annotated[AsyncSession, Depends(get_db)],
+    category_id: int,
+    category_update: schemas.CategoryUpdate,
 ):
-    return await crud.update_category(db=db, category_id=category_id, category_update=category_update)
+    return await crud.update_category(
+        db=db, category_id=category_id, category_update=category_update
+    )
+
+
+@router.delete("/{category_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category_route(
+    db: Annotated[AsyncSession, Depends(get_db)], category_id: int
+):
+    await crud.delete_category(db, category_id)
