@@ -38,6 +38,7 @@ class Customer(Base):
 class Profile(CustomerRelationMixin, Base):
     _customer_id_unique = True  # for a one-to-one relationship
     _customer_back_populate = "profile"
+
     first_name: Mapped[str | None] = mapped_column(String(40))
     last_name: Mapped[str | None] = mapped_column(String(40))
     bio: Mapped[str | None]
