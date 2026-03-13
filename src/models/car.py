@@ -1,6 +1,6 @@
 from datetime import date
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum, auto
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum as SQLAlchemyEnum, ForeignKey, UniqueConstraint
@@ -13,27 +13,27 @@ if TYPE_CHECKING:
     from src.models.customer import Customer
 
 
-class CarTypeEnum(str, Enum):
-    PASSENGER = "passenger"
-    MOTO = "moto"
-    TRUCK = "truck"
+class CarTypeEnum(StrEnum):
+    PASSENGER = auto()
+    MOTO = auto()
+    TRUCK = auto()
 
 
-class FuelTypeEnum(str, Enum):
-    PETROL = "petrol"
-    DIESEL = "diesel"
-    ELECTRIC = "electric"
-    GAS = "gas"
-    HYBRID = "hybrid"
+class FuelTypeEnum(StrEnum):
+    PETROL = auto()
+    DIESEL = auto()
+    ELECTRIC = auto()
+    GAS = auto()
+    HYBRID = auto()
 
 
-class TransmissionTypeEnum(str, Enum):
-    MANUAL = "manual"
-    AUTOMATIC = "automatic"
-    TIPTRONIC = "tiptronic"
-    ROBOT = "robot"
-    CVT = "cvt"
-    REDUCER = "reducer"
+class TransmissionTypeEnum(StrEnum):
+    MANUAL = auto()
+    AUTOMATIC = auto()
+    TIPTRONIC = auto()
+    ROBOT = auto()
+    CVT = auto()
+    REDUCER = auto()
 
 
 class CustomerCar(Base):
