@@ -40,3 +40,10 @@ async def get_category(db: Annotated[AsyncSession, Depends(get_db)], category_id
 @router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
 async def create_category(db: Annotated[AsyncSession, Depends(get_db)], category_create: schemas.CategoryCreate):
     return await crud.create_category(db=db, category_create=category_create)
+
+
+@router.put("/{category_id}/", response_model=Category)
+async def update_category(
+    db: Annotated[AsyncSession, Depends(get_db)], category_id: int, category_update: schemas.CategoryUpdate
+):
+    return await crud.update_category(db=db, category_id=category_id, category_update=category_update)

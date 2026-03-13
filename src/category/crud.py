@@ -36,9 +36,7 @@ async def create_category(db: AsyncSession, category_create: schemas.CategoryCre
 
 
 async def update_category(db: AsyncSession, category_id: int, category_update: schemas.CategoryCreate) -> Category:
-    stmt = select(Category).where(Category.id == category_id)
-    result = await db.execute(stmt)
-    category = result.scalar_one_or_none()
+    category = await get_category(db, category_id)
     if not category:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     if category.name != category_update.name:
