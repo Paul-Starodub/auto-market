@@ -30,9 +30,7 @@ async def get_categories(
 
 
 @router.get("/{category_id}/", response_model=Category)
-async def get_category_route(
-    db: Annotated[AsyncSession, Depends(get_db)], category_id: int
-):
+async def get_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
     return await crud.get_category(db=db, category_id=category_id)
 
 
@@ -56,7 +54,7 @@ async def update_category(
 
 
 @router.delete("/{category_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_category_route(
+async def delete_category(
     db: Annotated[AsyncSession, Depends(get_db)], category_id: int
 ):
     await crud.delete_category(db, category_id)
