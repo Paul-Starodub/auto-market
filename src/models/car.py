@@ -72,8 +72,21 @@ class Car(Base):
     costs: Mapped[Decimal] = mapped_column(DECIMAL(15, 2))
     category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
 
-    category: Mapped["Category | None"] = relationship(back_populates="cars")
+    category: Mapped[Category | None] = relationship(back_populates="cars")
     customers: Mapped[list["CustomerCar"]] = relationship(back_populates="car", cascade="all, delete-orphan")
+    images: Mapped[list["CarImage"]] = relationship(back_populates="car", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"Car(brand={self.brand}, model={self.model}, car_type={self.car_type}, fuel_type={self.fuel_type}, transmission_type={self.transmission_type}, start_year={self.start_year}, end_year={self.end_year}, costs={self.costs})"
+
+
+class CarImage(Base):
+    __tablename__ = "car_images"
+
+    file_path: Mapped[str] = mapped_column(String(255))
+    car_id: Mapped[int] = mapped_column(ForeignKey("cars.id", ondelete="CASCADE"), index=True)
+
+    car: Mapped["Car"] = relationship(back_populates="images")
+
+    def __repr__(self) -> str:
+        return f"CarImage(id={self.id}, file_path={self.file_path})"
