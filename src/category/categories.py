@@ -34,6 +34,9 @@ async def get_category(db: Annotated[AsyncSession, Depends(get_db)], category_id
     category = await crud.get_category(db=db, category_id=category_id)
     if category is not None:
         return category
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND, detail="Category not found"
-    )
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+
+
+@router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
+async def create_category(db: Annotated[AsyncSession, Depends(get_db)], category_create: schemas.CategoryCreate):
+    return await crud.create_category(db=db, category_create=category_create)
