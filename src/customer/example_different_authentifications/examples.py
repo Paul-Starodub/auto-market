@@ -1,7 +1,7 @@
 import secrets
 import string
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Cookie
@@ -215,6 +215,249 @@ PASSWORD = "vovk7777"
 ######## jwt authentication ######
 
 
+# class ErrorMessage(BaseModel):
+#     """Error message model."""
+#
+#     detail: str
+#
+#
+# class LoginRequest(BaseModel):
+#     """Login request model."""
+#
+#     username: str
+#     password: str
+#
+#
+# class LoginResponse(BaseModel):
+#     """Login response model."""
+#
+#     access_token: str
+#     token_type: str = "bearer"
+#     username: str
+#     message: str = "Login successful"
+#
+#
+# # Simple in-memory token blacklist store
+# # In production, use Redis or a database
+# blacklisted_tokens: Dict[str, datetime] = {}
+#
+# # JWT Security
+# security = HTTPBearer()
+#
+# # Global secret key to ensure consistency
+# _jwt_secret_key: Optional[str] = None
+#
+#
+# def get_jwt_secret_key() -> str:
+#     """Get JWT secret key from settings or generate a consistent one."""
+#     global _jwt_secret_key
+#
+#     # First, try to get from settings
+#     if hasattr(settings, "JWT_SECRET_KEY") and settings.JWT_SECRET_KEY:
+#         return settings.JWT_SECRET_KEY
+#
+#     # If not in settings, generate once and store globally
+#     if _jwt_secret_key is None:
+#         _jwt_secret_key = secrets.token_urlsafe(32)
+#         print(f"Generated JWT secret key: {_jwt_secret_key}")  # For debugging
+#
+#     return _jwt_secret_key
+#
+#
+# def validate_credentials(username: str, password: str) -> bool:
+#     """Validate user credentials.
+#
+#     Using secrets.compare_digest() instead of regular string comparison (==)
+#     provides protection against timing attacks. A timing attack is where
+#     an attacker measures the time it takes to compare strings to determine
+#     if they're getting closer to the correct value. The secrets module ensures
+#     that the comparison takes the same amount of time regardless of how many
+#     characters match, making the comparison resistant to timing attacks.
+#     """
+#     return secrets.compare_digest(username, "admin") and secrets.compare_digest(
+#         password, "vovk7777"
+#     )
+#
+#
+# def create_jwt_token(username: str, expires_delta: Optional[timedelta] = None) -> str:
+#     """Create a JWT token for the user."""
+#     if expires_delta:
+#         expire = datetime.now(timezone.utc) + expires_delta
+#     else:
+#         expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+#
+#     payload = {
+#         "sub": username,  # Subject (user identifier)
+#         "exp": int(expire.timestamp()),  # Expiration time as Unix timestamp
+#         "iat": int(
+#             datetime.now(timezone.utc).timestamp()
+#         ),  # Issued at as Unix timestamp
+#         "jti": secrets.token_urlsafe(16),  # JWT ID (unique identifier)
+#     }
+#
+#     return jwt.encode(payload, get_jwt_secret_key(), algorithm="HS256")
+#
+#
+# def decode_jwt_token(token: str) -> Dict:
+#     """Decode and validate a JWT token."""
+#     try:
+#         # Check if token is blacklisted
+#         if token in blacklisted_tokens:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="Token has been revoked",
+#             )
+#
+#         # Decode the token
+#         payload = jwt.decode(token, get_jwt_secret_key(), algorithms=["HS256"])
+#         return payload
+#
+#     except jwt.ExpiredSignatureError:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
+#         )
+#     except jwt.InvalidTokenError:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+#         )
+#
+#
+# def get_current_user(
+#     credentials: HTTPAuthorizationCredentials = Depends(security),
+# ) -> str:
+#     """Extract and validate the current user from JWT token."""
+#     token = credentials.credentials
+#     payload = decode_jwt_token(token)
+#     username = payload.get("sub")
+#
+#     if username is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
+#         )
+#
+#     return username
+#
+#
+# def blacklist_token(token: str) -> None:
+#     """Add token to blacklist (for logout functionality)."""
+#     try:
+#         payload = jwt.decode(token, get_jwt_secret_key(), algorithms=["HS256"])
+#         exp_timestamp = payload.get("exp")
+#         if exp_timestamp:
+#             exp_datetime = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
+#             blacklisted_tokens[token] = exp_datetime
+#
+#             # Clean up expired blacklisted tokens
+#             cleanup_expired_blacklisted_tokens()
+#     except jwt.InvalidTokenError:
+#         # If token is invalid, no need to blacklist
+#         pass
+#
+#
+# def cleanup_expired_blacklisted_tokens() -> None:
+#     """Remove expired tokens from blacklist to prevent memory leaks."""
+#     current_time = datetime.now(timezone.utc)
+#     expired_tokens = [
+#         token
+#         for token, exp_time in blacklisted_tokens.items()
+#         if exp_time < current_time
+#     ]
+#
+#     for token in expired_tokens:
+#         del blacklisted_tokens[token]
+#
+#
+# @router.post(
+#     "/login/",
+#     response_model=LoginResponse,
+#     summary="Login with username and password",
+#     description="Get a JWT access token",
+#     responses={
+#         200: {"description": "Login successful"},
+#         401: {
+#             "model": ErrorMessage,
+#             "description": "Unauthorized: Invalid credentials",
+#         },
+#     },
+# )
+# async def login(login_request: LoginRequest):
+#     """Login endpoint that returns a JWT access token."""
+#     # Validate credentials
+#     if not validate_credentials(login_request.username, login_request.password):
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid username or password",
+#         )
+#
+#     # Create JWT token
+#     access_token = create_jwt_token(login_request.username)
+#
+#     return LoginResponse(access_token=access_token, username=login_request.username)
+#
+#
+# @router.get(
+#     "/protected/",
+#     summary="Protected route (requires JWT token)",
+#     description="This endpoint requires a valid JWT token in Authorization header",
+#     responses={
+#         200: {"description": "Successful response"},
+#         401: {
+#             "model": ErrorMessage,
+#             "description": "Unauthorized: Invalid or missing token",
+#         },
+#     },
+# )
+# async def protected_route(username: str = Depends(get_current_user)):
+#     """Protected route that requires a valid JWT token."""
+#     return {
+#         "message": "This is a protected route",
+#         "data": "secret information accessible with JWT token",
+#         "authenticated_user": username,
+#     }
+#
+#
+# @router.post(
+#     "/logout/",
+#     summary="Logout and blacklist token",
+#     description="Blacklist the current JWT token to prevent further use",
+#     responses={
+#         200: {"description": "Logout successful"},
+#         401: {
+#             "model": ErrorMessage,
+#             "description": "Unauthorized: Invalid or missing token",
+#         },
+#     },
+# )
+# async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
+#     """Logout endpoint that blacklists the current JWT token."""
+#     token = credentials.credentials
+#     blacklist_token(token)
+#
+#     return {"message": "Logout successful"}
+#
+#
+# @router.get(
+#     "/me/",
+#     summary="Get current user info",
+#     description="Get information about the currently authenticated user",
+#     responses={
+#         200: {"description": "User information"},
+#         401: {
+#             "model": ErrorMessage,
+#             "description": "Unauthorized: Invalid or missing token",
+#         },
+#     },
+# )
+# async def get_user_info(username: str = Depends(get_current_user)):
+#     """Get current user information from JWT token."""
+#     return {"username": username, "message": "User information retrieved successfully"}
+
+
+#####################################
+
+############### jwt & refresh token ############
+
+
 class ErrorMessage(BaseModel):
     """Error message model."""
 
@@ -229,39 +472,40 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Login response model."""
+    """Login response model with both access and refresh tokens."""
 
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     username: str
     message: str = "Login successful"
 
 
-# Simple in-memory token blacklist store
-# In production, use Redis or a database
+class RefreshTokenRequest(BaseModel):
+    """Refresh token request model."""
+
+    refresh_token: str
+
+
+class RefreshTokenResponse(BaseModel):
+    """Refresh token response model with new access token."""
+
+    access_token: str
+    token_type: str = "bearer"
+    message: str = "Token refreshed successfully"
+
+
 blacklisted_tokens: Dict[str, datetime] = {}
+
+# Refresh token store (in production, use database)
+refresh_tokens: Dict[str, Dict] = {}  # token -> {"username": str, "exp": datetime}
 
 # JWT Security
 security = HTTPBearer()
 
-# Global secret key to ensure consistency
-_jwt_secret_key: Optional[str] = None
 
-
-def get_jwt_secret_key() -> str:
-    """Get JWT secret key from settings or generate a consistent one."""
-    global _jwt_secret_key
-
-    # First, try to get from settings
-    if hasattr(settings, "JWT_SECRET_KEY") and settings.JWT_SECRET_KEY:
-        return settings.JWT_SECRET_KEY
-
-    # If not in settings, generate once and store globally
-    if _jwt_secret_key is None:
-        _jwt_secret_key = secrets.token_urlsafe(32)
-        print(f"Generated JWT secret key: {_jwt_secret_key}")  # For debugging
-
-    return _jwt_secret_key
+JWT_SECRET_KEY = secrets.token_urlsafe(32)  # needs to be situated in settings.py
+REFRESH_EXPIRE_DAYS = 7
 
 
 def validate_credentials(username: str, password: str) -> bool:
@@ -274,28 +518,70 @@ def validate_credentials(username: str, password: str) -> bool:
     that the comparison takes the same amount of time regardless of how many
     characters match, making the comparison resistant to timing attacks.
     """
-    return secrets.compare_digest(username, "admin") and secrets.compare_digest(
-        password, "vovk7777"
-    )
+    return secrets.compare_digest(username, "admin") and secrets.compare_digest(password, "vovk7777")
 
 
-def create_jwt_token(username: str, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT token for the user."""
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=30)
+def create_jwt_token(
+    username: str,
+) -> str:
+    """Create a JWT access token for the user."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=30)
 
     payload = {
         "sub": username,  # Subject (user identifier)
         "exp": int(expire.timestamp()),  # Expiration time as Unix timestamp
-        "iat": int(
-            datetime.now(timezone.utc).timestamp()
-        ),  # Issued at as Unix timestamp
+        "iat": int(datetime.now(timezone.utc).timestamp()),  # Issued at as Unix timestamp
         "jti": secrets.token_urlsafe(16),  # JWT ID (unique identifier)
+        "type": "access",  # Token type
     }
 
-    return jwt.encode(payload, get_jwt_secret_key(), algorithm="HS256")
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
+
+
+def create_refresh_token(
+    username: str,
+) -> str:
+    """Create a refresh token for the user."""
+    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_EXPIRE_DAYS)
+
+    refresh_token = secrets.token_urlsafe(32)
+
+    # Store refresh token info
+    refresh_tokens[refresh_token] = {"username": username, "exp": expire}
+
+    # Clean up expired refresh tokens
+    cleanup_expired_refresh_tokens()
+
+    return refresh_token
+
+
+def create_token_pair(username: str) -> Tuple[str, str]:
+    """Create both access and refresh tokens for the user."""
+    access_token = create_jwt_token(username)
+    refresh_token = create_refresh_token(username)
+    return access_token, refresh_token
+
+
+def validate_refresh_token(refresh_token: str) -> str:
+    """Validate refresh token and return username."""
+    if refresh_token not in refresh_tokens:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+    token_info = refresh_tokens[refresh_token]
+
+    # Check if token is expired
+    if token_info["exp"] < datetime.now(timezone.utc):
+        # Remove expired token
+        del refresh_tokens[refresh_token]
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token has expired")
+
+    return token_info["username"]
+
+
+def revoke_refresh_token(refresh_token: str) -> None:
+    """Revoke a refresh token (for logout)."""
+    if refresh_token in refresh_tokens:
+        del refresh_tokens[refresh_token]
 
 
 def decode_jwt_token(token: str) -> Dict:
@@ -309,17 +595,13 @@ def decode_jwt_token(token: str) -> Dict:
             )
 
         # Decode the token
-        payload = jwt.decode(token, get_jwt_secret_key(), algorithms=["HS256"])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
         return payload
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
     except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 
 def get_current_user(
@@ -331,9 +613,7 @@ def get_current_user(
     username = payload.get("sub")
 
     if username is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
 
     return username
 
@@ -341,7 +621,7 @@ def get_current_user(
 def blacklist_token(token: str) -> None:
     """Add token to blacklist (for logout functionality)."""
     try:
-        payload = jwt.decode(token, get_jwt_secret_key(), algorithms=["HS256"])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=["HS256"])
         exp_timestamp = payload.get("exp")
         if exp_timestamp:
             exp_datetime = datetime.fromtimestamp(exp_timestamp, tz=timezone.utc)
@@ -357,21 +637,26 @@ def blacklist_token(token: str) -> None:
 def cleanup_expired_blacklisted_tokens() -> None:
     """Remove expired tokens from blacklist to prevent memory leaks."""
     current_time = datetime.now(timezone.utc)
-    expired_tokens = [
-        token
-        for token, exp_time in blacklisted_tokens.items()
-        if exp_time < current_time
-    ]
+    expired_tokens = [token for token, exp_time in blacklisted_tokens.items() if exp_time < current_time]
 
     for token in expired_tokens:
         del blacklisted_tokens[token]
+
+
+def cleanup_expired_refresh_tokens() -> None:
+    """Remove expired refresh tokens to prevent memory leaks."""
+    current_time = datetime.now(timezone.utc)
+    expired_tokens = [token for token, info in refresh_tokens.items() if info["exp"] < current_time]
+
+    for token in expired_tokens:
+        del refresh_tokens[token]
 
 
 @router.post(
     "/login/",
     response_model=LoginResponse,
     summary="Login with username and password",
-    description="Get a JWT access token",
+    description="Get JWT access and refresh tokens",
     responses={
         200: {"description": "Login successful"},
         401: {
@@ -381,7 +666,7 @@ def cleanup_expired_blacklisted_tokens() -> None:
     },
 )
 async def login(login_request: LoginRequest):
-    """Login endpoint that returns a JWT access token."""
+    """Login endpoint that returns both access and refresh tokens."""
     # Validate credentials
     if not validate_credentials(login_request.username, login_request.password):
         raise HTTPException(
@@ -389,10 +674,38 @@ async def login(login_request: LoginRequest):
             detail="Invalid username or password",
         )
 
-    # Create JWT token
-    access_token = create_jwt_token(login_request.username)
+    # Create both access and refresh tokens
+    access_token, refresh_token = create_token_pair(login_request.username)
 
-    return LoginResponse(access_token=access_token, username=login_request.username)
+    return LoginResponse(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        username=login_request.username,
+    )
+
+
+@router.post(
+    "/refresh/",
+    response_model=RefreshTokenResponse,
+    summary="Refresh access token",
+    description="Get a new access token using a valid refresh token",
+    responses={
+        200: {"description": "Token refreshed successfully"},
+        401: {
+            "model": ErrorMessage,
+            "description": "Unauthorized: Invalid or expired refresh token",
+        },
+    },
+)
+async def refresh_token(refresh_request: RefreshTokenRequest):
+    """Refresh endpoint that generates a new access token using a refresh token."""
+    # Validate refresh token and get username
+    username = validate_refresh_token(refresh_request.refresh_token)
+
+    # Create new access token
+    new_access_token = create_jwt_token(username)
+
+    return RefreshTokenResponse(access_token=new_access_token)
 
 
 @router.get(
@@ -418,8 +731,8 @@ async def protected_route(username: str = Depends(get_current_user)):
 
 @router.post(
     "/logout/",
-    summary="Logout and blacklist token",
-    description="Blacklist the current JWT token to prevent further use",
+    summary="Logout and blacklist tokens",
+    description="Blacklist the current JWT token and optionally revoke refresh token",
     responses={
         200: {"description": "Logout successful"},
         401: {
@@ -428,10 +741,17 @@ async def protected_route(username: str = Depends(get_current_user)):
         },
     },
 )
-async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Logout endpoint that blacklists the current JWT token."""
-    token = credentials.credentials
-    blacklist_token(token)
+async def logout(
+    refresh_request: RefreshTokenRequest = None,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """Logout endpoint that blacklists the current JWT token and optionally revokes refresh token."""
+    access_token = credentials.credentials
+    blacklist_token(access_token)
+
+    # If refresh token provided, revoke it
+    if refresh_request and refresh_request.refresh_token:
+        revoke_refresh_token(refresh_request.refresh_token)
 
     return {"message": "Logout successful"}
 
