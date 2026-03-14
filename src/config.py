@@ -22,6 +22,11 @@ class Settings(BaseSettings):
 
     posts_per_page: int = 10
 
+    # for learning purposes
+    API_USERNAME: str = "admin"
+    API_PASSWORD: str = "vovk7777"
+    ########
+
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
