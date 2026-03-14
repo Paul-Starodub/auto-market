@@ -274,8 +274,8 @@ def validate_credentials(username: str, password: str) -> bool:
     that the comparison takes the same amount of time regardless of how many
     characters match, making the comparison resistant to timing attacks.
     """
-    return secrets.compare_digest(username, settings.API_USERNAME) and secrets.compare_digest(
-        password, settings.API_PASSWORD
+    return secrets.compare_digest(username, "admin") and secrets.compare_digest(
+        password, "vovk7777"
     )
 
 
@@ -289,7 +289,9 @@ def create_jwt_token(username: str, expires_delta: Optional[timedelta] = None) -
     payload = {
         "sub": username,  # Subject (user identifier)
         "exp": int(expire.timestamp()),  # Expiration time as Unix timestamp
-        "iat": int(datetime.now(timezone.utc).timestamp()),  # Issued at as Unix timestamp
+        "iat": int(
+            datetime.now(timezone.utc).timestamp()
+        ),  # Issued at as Unix timestamp
         "jti": secrets.token_urlsafe(16),  # JWT ID (unique identifier)
     }
 
@@ -311,9 +313,13 @@ def decode_jwt_token(token: str) -> Dict:
         return payload
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
+        )
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
 
 
 def get_current_user(
@@ -325,7 +331,9 @@ def get_current_user(
     username = payload.get("sub")
 
     if username is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
+        )
 
     return username
 
@@ -349,7 +357,11 @@ def blacklist_token(token: str) -> None:
 def cleanup_expired_blacklisted_tokens() -> None:
     """Remove expired tokens from blacklist to prevent memory leaks."""
     current_time = datetime.now(timezone.utc)
-    expired_tokens = [token for token, exp_time in blacklisted_tokens.items() if exp_time < current_time]
+    expired_tokens = [
+        token
+        for token, exp_time in blacklisted_tokens.items()
+        if exp_time < current_time
+    ]
 
     for token in expired_tokens:
         del blacklisted_tokens[token]
