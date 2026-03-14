@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 
@@ -13,7 +15,6 @@ security = HTTPBasic()
 
 
 def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
-    import secrets
 
     is_correct_username = secrets.compare_digest(credentials.username, USERNAME)
     is_correct_password = secrets.compare_digest(credentials.password, PASSWORD)
