@@ -6,15 +6,19 @@ from fastapi.staticfiles import StaticFiles
 
 from src.category import categories_router
 from src.customer import customers_router
+from src.customer.example_different_authentifications import examples_router
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 app = FastAPI()
 app.mount("/src/media", StaticFiles(directory=BASE_DIR / "src" / "media"), name="media")
-app.mount("/src/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
+app.mount(
+    "/src/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static"
+)
 app.include_router(categories_router)
 app.include_router(customers_router)
+app.include_router(examples_router)
 
 
 @app.get("/")
