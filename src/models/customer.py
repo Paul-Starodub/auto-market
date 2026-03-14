@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
+from src.customer import validators
 from src.models.base import Base
 from src.models.mixins import CustomerRelationMixin
 
@@ -30,6 +31,10 @@ class Customer(Base):
         if self.image_file:
             return f"/media/customer_pics/{self.image_file}"
         return "/static/customer_pics/default.jpg"
+
+    @validates("email")
+    def validate_email(self, key, value) -> str:
+        return validators.validate_email(value.lower())
 
     def __repr__(self) -> str:
         return f"User(username={self.username}, email={self.email}, password_hash={self.password_hash}, image_file={self.image_file})"
