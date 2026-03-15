@@ -27,6 +27,9 @@ class Customer(Base):
     cars: Mapped[list["CustomerCar"]] = relationship(
         back_populates="customer", cascade="all, delete-orphan"
     )
+    refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
 
     @property
     def image_path(self) -> str:
