@@ -32,3 +32,13 @@ async def create_customer(db: AsyncSession, customer: CustomerCreate):
     await db.commit()
     await db.refresh(new_customer)
     return new_customer
+
+
+async def create_refresh_token(
+    db: AsyncSession, customer_id: int, token: str, days_valid: int
+):
+    refresh_token = models.RefreshTokenModel.create(
+        customer_id=customer_id, token=token, days_valid=days_valid
+    )
+    db.add(refresh_token)
+    await db.commit()

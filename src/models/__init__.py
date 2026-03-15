@@ -3,8 +3,9 @@ __all__ = [
     "Car",
     "CustomerCar",
     "Base",
+    "RefreshTokenModel",
 ]
 
-from .customer import Customer
+from .customer import Customer, RefreshTokenModel
 from .car import Car, CustomerCar
 from .base import Base

@@ -33,3 +33,9 @@ class CustomerPrivate(CustomerPublic):
 class CustomerUpdate(BaseModel):
     username: str | None = Field(default=None, min_length=1, max_length=50)
     email: EmailStr | None = Field(default=None, max_length=120)
+
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str | None = None
+    token_type: str

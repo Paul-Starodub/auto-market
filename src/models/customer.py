@@ -61,7 +61,7 @@ class RefreshTokenModel(Base):
     __tablename__ = "refresh_tokens"
 
     token: Mapped[str] = mapped_column(
-        String(64), unique=True, default=generate_secure_token
+        String(512), unique=True, nullable=False, default=generate_secure_token
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
