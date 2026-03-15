@@ -18,12 +18,12 @@ class CustomerCreate(CustomerBase):
 
 
 class CustomerPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
     id: int
     username: str
     image_file: str | None
     image_path: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CustomerPrivate(CustomerPublic):
