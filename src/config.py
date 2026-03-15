@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).parent.parent
@@ -16,8 +15,9 @@ class Settings(BaseSettings):
 
     max_upload_size_bytes: int = 5 * 1024 * 1024
 
-    secret_key: SecretStr
-    algorithm: str = "HS256"
+    SECRET_KEY_ACCESS: str
+    SECRET_KEY_REFRESH: str
+    JWT_SIGNING_ALGORITHM: str
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
 

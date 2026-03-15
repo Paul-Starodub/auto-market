@@ -48,13 +48,9 @@ async def update_category(
     category_id: int,
     category_update: schemas.CategoryUpdate,
 ):
-    return await crud.update_category(
-        db=db, category_id=category_id, category_update=category_update
-    )
+    return await crud.update_category(db=db, category_id=category_id, category_update=category_update)
 
 
 @router.delete("/{category_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_category(
-    db: Annotated[AsyncSession, Depends(get_db)], category_id: int
-):
+async def delete_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
     await crud.delete_category(db, category_id)
