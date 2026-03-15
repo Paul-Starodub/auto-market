@@ -18,7 +18,7 @@ app.mount(
 )
 app.include_router(categories_router)
 app.include_router(customers_router)
-app.include_router(examples_router)
+# app.include_router(examples_router)
 
 
 @app.get("/")
