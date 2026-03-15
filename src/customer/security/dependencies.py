@@ -1,10 +1,8 @@
-from fastapi import Depends
-
-from src.config import Settings, get_settings
+from src.config import settings
 from src.customer.security.token_manager import JWTAuthManager
 
 
-def get_jwt_auth_manager(settings: Settings = Depends(get_settings)) -> JWTAuthManager:
+def get_jwt_auth_manager() -> JWTAuthManager:
     """
     Create and return a JWT authentication manager instance.
 
