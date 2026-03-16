@@ -7,7 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.customer import crud
-from src.customer.schemas import CustomerPrivate, CustomerCreate, Token, CustomerPublic
+from src.customer.schemas import (
+    CustomerPrivate,
+    CustomerCreate,
+    Token,
+    CustomerPublic,
+    CustomerUpdate,
+)
+from src.customer.security.auth import CurrentCustomer
 from src.customer.security.dependencies import get_jwt_auth_manager
 from src.customer.security.secutity import verify_password
 from src.customer.security.token_manager import JWTAuthManager
@@ -21,18 +28,12 @@ async def create_customer(
     customer: CustomerCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    existing_customer = await crud.get_customer_by_username(
-        db=db, username=customer.username
-    )
+    existing_customer = await crud.get_customer_by_username(db=db, username=customer.username)
     if existing_customer:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
     existing_email = await crud.get_customer_by_email(db=db, email=customer.email)
     if existing_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     return await crud.create_customer(db=db, customer=customer)
 
 
@@ -75,7 +76,65 @@ async def login(
 async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     customer = await crud.get_customer_by_id(db, customer_id)
     if not customer:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return customer
+
+
+@router.patch("/{customer_id}/", response_model=CustomerPrivate)
+async def update_customer(
+    customer_id: int,
+    customer_update: CustomerUpdate,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    if customer_id != current_customer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this customer",
+        )
+    customer = await crud.get_customer_by_id(db, customer_id)
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Customer not found",
+        )
+    if customer_update.username and customer_update.username.lower() != customer.username.lower():
+        existing = await crud.get_customer_by_username(db, customer_update.username)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already exists",
+            )
+    if customer_update.email and customer_update.email.lower() != customer.email:
+        existing = await crud.get_customer_by_email(db, customer_update.email)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered",
+            )
+    return await crud.update_customer(db, customer, customer_update)
+
+
+# @router.delete("/{user_id}/", status_code=status.HTTP_204_NO_CONTENT)
+# async def delete_user(
+#     user_id: int,
+#     current_user: CurrentUser,
+#     db: Annotated[AsyncSession, Depends(get_db)],
+# ):
+#     if user_id != current_user.id:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="Not authorized to delete this user",
+#         )
+#     result = await db.execute(select(models.User).where(models.User.id == user_id))
+#     user = result.scalars().first()
+#     if not user:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="User not found",
+#         )
+#     old_filename = user.image_file
+#     await db.delete(user)
+#     await db.commit()
+#     if old_filename:
+#         delete_profile_image(old_filename)
