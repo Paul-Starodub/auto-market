@@ -2,12 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import settings
 from src.customer import crud
-from src.customer.schemas import CustomerPrivate, CustomerCreate, Token
+from src.customer.schemas import CustomerPrivate, CustomerCreate, Token, CustomerPublic
 from src.customer.security.dependencies import get_jwt_auth_manager
 from src.customer.security.secutity import verify_password
 from src.customer.security.token_manager import JWTAuthManager
@@ -69,3 +70,13 @@ async def login(
         refresh_token=jwt_refresh_token,
         token_type="bearer",
     )
+
+
+@router.get("/{customer_id}/", response_model=CustomerPublic)
+async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+    customer = await crud.get_customer_by_id(db, customer_id)
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
+    return customer

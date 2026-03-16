@@ -42,3 +42,10 @@ async def create_refresh_token(
     )
     db.add(refresh_token)
     await db.commit()
+
+
+async def get_customer_by_id(db: AsyncSession, customer_id: int):
+    result = await db.execute(
+        select(models.Customer).where(models.Customer.id == customer_id)
+    )
+    return result.scalars().first()
