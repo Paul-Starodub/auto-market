@@ -72,6 +72,11 @@ async def login(
     )
 
 
+@router.get("/me/", response_model=CustomerPrivate)
+async def get_current_customer(current_customer: CurrentCustomer):
+    return current_customer
+
+
 @router.get("/{customer_id}/", response_model=CustomerPublic)
 async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     customer = await crud.get_customer_by_id(db, customer_id)
