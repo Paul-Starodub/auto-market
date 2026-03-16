@@ -1,5 +1,5 @@
 from datetime import datetime, UTC
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func, delete, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import models
@@ -53,6 +53,21 @@ async def delete_expired_refresh_tokens(db: AsyncSession, customer_id: int):
         )
     )
     await db.commit()
+
+
+async def cleanup_old_refresh_tokens(db: AsyncSession, customer_id: int, keep_latest: int = 5):
+    """Keep only N most recent refresh tokens per customer to prevent token accumulation"""
+    result = await db.execute(
+        select(models.RefreshTokenModel)
+        .where(models.RefreshTokenModel.customer_id == customer_id)
+        .order_by(desc(models.RefreshTokenModel.id))
+    )
+    tokens = result.scalars().all()
+    if len(tokens) > keep_latest:
+        tokens_to_delete = tokens[keep_latest:]
+        for token in tokens_to_delete:
+            await db.delete(token)
+        await db.commit()
 
 
 async def get_customer_by_id(db: AsyncSession, customer_id: int):

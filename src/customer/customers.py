@@ -60,6 +60,7 @@ async def login(
             token=jwt_refresh_token,
             days_valid=settings.refresh_token_expire_days,
         )
+        await crud.cleanup_old_refresh_tokens(db, customer.id, keep_latest=5)
     except SQLAlchemyError:
         await db.rollback()
         raise HTTPException(
