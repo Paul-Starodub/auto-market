@@ -38,9 +38,13 @@ class TransmissionTypeEnum(StrEnum):
 
 class CustomerCar(Base):
     __tablename__ = "customers_cars"
-    __table_args__ = (UniqueConstraint("customer_id", "car_id", name="idx_unique_customer_car"),)
+    __table_args__ = (
+        UniqueConstraint("customer_id", "car_id", name="idx_unique_customer_car"),
+    )
 
-    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"))
+    customer_id: Mapped[int] = mapped_column(
+        ForeignKey("customers.id", ondelete="CASCADE")
+    )
     car_id: Mapped[int] = mapped_column(ForeignKey("cars.id", ondelete="CASCADE"))
     offer: Mapped[Decimal] = mapped_column(DECIMAL(15, 2))
 
@@ -62,19 +66,29 @@ class Category(Base):
 class Car(Base):
     brand: Mapped[str] = mapped_column(String(30))
     model: Mapped[str] = mapped_column(String(50))
-    car_type: Mapped[CarTypeEnum | None] = mapped_column(SQLAlchemyEnum(CarTypeEnum, name="car_type_enum"))
-    fuel_type: Mapped[FuelTypeEnum | None] = mapped_column(SQLAlchemyEnum(FuelTypeEnum, name="fuel_type_enum"))
+    car_type: Mapped[CarTypeEnum | None] = mapped_column(
+        SQLAlchemyEnum(CarTypeEnum, name="car_type_enum")
+    )
+    fuel_type: Mapped[FuelTypeEnum | None] = mapped_column(
+        SQLAlchemyEnum(FuelTypeEnum, name="fuel_type_enum")
+    )
     transmission_type: Mapped[TransmissionTypeEnum | None] = mapped_column(
         SQLAlchemyEnum(TransmissionTypeEnum, name="transmission_type_enum")
     )
-    start_year: Mapped[date]
-    end_year: Mapped[date]
-    costs: Mapped[Decimal] = mapped_column(DECIMAL(15, 2))
-    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
+    start_year: Mapped[int]
+    end_year: Mapped[int]
+    cost: Mapped[Decimal] = mapped_column(DECIMAL(15, 2))
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("categories.id", ondelete="SET NULL"), index=True
+    )
 
     category: Mapped[Category | None] = relationship(back_populates="cars")
-    customers: Mapped[list["CustomerCar"]] = relationship(back_populates="car", cascade="all, delete-orphan")
-    images: Mapped[list["CarImage"]] = relationship(back_populates="car", cascade="all, delete-orphan")
+    customers: Mapped[list["CustomerCar"]] = relationship(
+        back_populates="car", cascade="all, delete-orphan"
+    )
+    images: Mapped[list["CarImage"]] = relationship(
+        back_populates="car", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"Car(brand={self.brand}, model={self.model}, car_type={self.car_type}, fuel_type={self.fuel_type}, transmission_type={self.transmission_type}, start_year={self.start_year}, end_year={self.end_year}, costs={self.costs})"
@@ -84,7 +98,9 @@ class CarImage(Base):
     __tablename__ = "car_images"
 
     file_path: Mapped[str] = mapped_column(String(255))
-    car_id: Mapped[int] = mapped_column(ForeignKey("cars.id", ondelete="CASCADE"), index=True)
+    car_id: Mapped[int] = mapped_column(
+        ForeignKey("cars.id", ondelete="CASCADE"), index=True
+    )
 
     car: Mapped["Car"] = relationship(back_populates="images")
 
