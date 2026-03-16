@@ -28,12 +28,18 @@ async def create_customer(
     customer: CustomerCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    existing_customer = await crud.get_customer_by_username(db=db, username=customer.username)
+    existing_customer = await crud.get_customer_by_username(
+        db=db, username=customer.username
+    )
     if existing_customer:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
+        )
     existing_email = await crud.get_customer_by_email(db=db, email=customer.email)
     if existing_email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
     return await crud.create_customer(db=db, customer=customer)
 
 
@@ -81,7 +87,9 @@ async def get_current_customer(current_customer: CurrentCustomer):
 async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     customer = await crud.get_customer_by_id(db, customer_id)
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
     return customer
 
 
@@ -103,7 +111,10 @@ async def update_customer(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Customer not found",
         )
-    if customer_update.username and customer_update.username.lower() != customer.username.lower():
+    if (
+        customer_update.username
+        and customer_update.username.lower() != customer.username.lower()
+    ):
         existing = await crud.get_customer_by_username(db, customer_update.username)
         if existing:
             raise HTTPException(
@@ -120,26 +131,20 @@ async def update_customer(
     return await crud.update_customer(db, customer, customer_update)
 
 
-# @router.delete("/{user_id}/", status_code=status.HTTP_204_NO_CONTENT)
-# async def delete_user(
-#     user_id: int,
-#     current_user: CurrentUser,
-#     db: Annotated[AsyncSession, Depends(get_db)],
-# ):
-#     if user_id != current_user.id:
-#         raise HTTPException(
-#             status_code=status.HTTP_403_FORBIDDEN,
-#             detail="Not authorized to delete this user",
-#         )
-#     result = await db.execute(select(models.User).where(models.User.id == user_id))
-#     user = result.scalars().first()
-#     if not user:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="User not found",
-#         )
-#     old_filename = user.image_file
-#     await db.delete(user)
-#     await db.commit()
-#     if old_filename:
-#         delete_profile_image(old_filename)
+@router.delete("/{customer_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_customer(
+    customer_id: int,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    if customer_id != current_customer.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this customer",
+        )
+    customer = await crud.get_customer_by_id(db, customer_id)
+    if not customer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
+    await crud.delete_customer(db, customer)
