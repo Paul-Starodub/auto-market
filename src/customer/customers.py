@@ -1,13 +1,16 @@
 from datetime import datetime, UTC
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from PIL import UnidentifiedImageError
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from src.config import settings
 from src.customer import crud
+from src.customer.image_utils import process_image, delete_image
 from src.customer.schemas import (
     CustomerPrivate,
     CustomerCreate,
@@ -29,12 +32,18 @@ async def create_customer(
     customer: CustomerCreate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    existing_customer = await crud.get_customer_by_username(db=db, username=customer.username)
+    existing_customer = await crud.get_customer_by_username(
+        db=db, username=customer.username
+    )
     if existing_customer:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists"
+        )
     existing_email = await crud.get_customer_by_email(db=db, email=customer.email)
     if existing_email:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
     return await crud.create_customer(db=db, customer=customer)
 
 
@@ -83,7 +92,9 @@ async def refresh_tokens(
 ):
     customer_id = jwt_manager.decode_refresh_token(refresh_token)
     if not customer_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+        )
     db_token = await crud.get_refresh_token(db, refresh_token)
     if not db_token:
         raise HTTPException(
@@ -92,7 +103,9 @@ async def refresh_tokens(
         )
     if db_token.expires_at < datetime.now(UTC):
         await crud.delete_refresh_token(db, refresh_token)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired"
+        )
     await crud.delete_refresh_token(db, refresh_token)
     new_access_token = jwt_manager.create_access_token({"sub": str(customer_id)})
     new_refresh_token = jwt_manager.create_refresh_token({"sub": str(customer_id)})
@@ -109,6 +122,17 @@ async def refresh_tokens(
     )
 
 
+@router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    refresh_token: str,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    db_token = await crud.get_refresh_token(db, refresh_token)
+    if db_token and db_token.customer_id == current_customer.id:
+        await crud.delete_refresh_token(db, refresh_token)
+
+
 @router.get("/me/", response_model=CustomerPrivate)
 async def get_current_customer(current_customer: CurrentCustomer):
     return current_customer
@@ -118,7 +142,9 @@ async def get_current_customer(current_customer: CurrentCustomer):
 async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     customer = await crud.get_customer_by_id(db, customer_id)
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
     return customer
 
 
@@ -140,7 +166,10 @@ async def update_customer(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Customer not found",
         )
-    if customer_update.username and customer_update.username.lower() != customer.username.lower():
+    if (
+        customer_update.username
+        and customer_update.username.lower() != customer.username.lower()
+    ):
         existing = await crud.get_customer_by_username(db, customer_update.username)
         if existing:
             raise HTTPException(
@@ -157,17 +186,6 @@ async def update_customer(
     return await crud.update_customer(db, customer, customer_update)
 
 
-@router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(
-    refresh_token: str,
-    current_customer: CurrentCustomer,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
-    db_token = await crud.get_refresh_token(db, refresh_token)
-    if db_token and db_token.customer_id == current_customer.id:
-        await crud.delete_refresh_token(db, refresh_token)
-
-
 @router.delete("/{customer_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_customer(
     customer_id: int,
@@ -181,5 +199,65 @@ async def delete_customer(
         )
     customer = await crud.get_customer_by_id(db, customer_id)
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found"
+        )
     await crud.delete_customer(db, customer)
+
+
+@router.patch("/{customer_id}/picture/", response_model=CustomerPrivate)
+async def upload_profile_picture(
+    customer_id: int,
+    file: UploadFile,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    if current_customer.id != customer_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to update this customer's picture",
+        )
+    content = await file.read()
+    if len(content) > settings.max_upload_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
+        )
+    try:
+        new_filename = await run_in_threadpool(process_image, content)
+    except UnidentifiedImageError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
+        ) from err
+    old_filename = current_customer.image_file
+    current_customer.image_file = new_filename
+    await db.commit()
+    await db.refresh(current_customer)
+    if old_filename:
+        delete_image(old_filename)
+    return current_customer
+
+
+@router.delete("/{customer_id}/picture/", response_model=CustomerPrivate)
+async def delete_user_picture(
+    customer_id: int,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    if current_customer.id != customer_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this customer's picture",
+        )
+    old_filename = current_customer.image_file
+    if old_filename is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No picture to delete",
+        )
+    current_customer.image_file = None
+    await db.commit()
+    await db.refresh(current_customer)
+    delete_image(old_filename)
+    return current_customer

@@ -34,7 +34,7 @@ class Customer(Base):
     @property
     def image_path(self) -> str:
         if self.image_file:
-            return f"/media/customer_pics/{self.image_file}"
+            return f"/media/pics/{self.image_file}"
         return "/static/customer_pics/default.jpg"
 
     @validates("email")

@@ -3,6 +3,7 @@ from sqlalchemy import select, func, delete, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import models
+from src.customer.image_utils import delete_image
 from src.customer.schemas import CustomerCreate, CustomerUpdate
 from src.customer.security.secutity import hash_password
 
@@ -87,5 +88,8 @@ async def update_customer(db: AsyncSession, customer, customer_update: CustomerU
 
 async def delete_customer(db: AsyncSession, customer):
     await db.execute(delete(models.RefreshTokenModel).where(models.RefreshTokenModel.customer_id == customer.id))
+    old_filename = customer.image_file
     await db.delete(customer)
     await db.commit()
+    if old_filename:
+        delete_image(old_filename)
