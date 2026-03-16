@@ -19,7 +19,9 @@ class JWTAuthManager:
         self._secret_key_refresh = secret_key_refresh
         self._algorithm = algorithm
 
-    def _create_token(self, data: dict, secret_key: str, expires_delta: timedelta) -> str:
+    def _create_token(
+        self, data: dict, secret_key: str, expires_delta: timedelta
+    ) -> str:
         """
         Create a JWT token with provided data, secret key, and expiration time.
         """
@@ -45,17 +47,29 @@ class JWTAuthManager:
             return None
         return payload.get("sub")
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(
+        self, data: dict, expires_delta: Optional[timedelta] = None
+    ) -> str:
         """
         Create a new access token with a default or specified expiration time.
         """
-        return self._create_token(data, self._secret_key_access, expires_delta)
+        return self._create_token(
+            data,
+            self._secret_key_access,
+            expires_delta or timedelta(minutes=settings.access_token_expire_minutes),
+        )
 
-    def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_refresh_token(
+        self, data: dict, expires_delta: Optional[timedelta] = None
+    ) -> str:
         """
         Create a new refresh token with a default or specified expiration time.
         """
-        return self._create_token(data, self._secret_key_refresh, expires_delta)
+        return self._create_token(
+            data,
+            self._secret_key_refresh,
+            expires_delta or timedelta(days=settings.refresh_token_expire_days),
+        )
 
     def decode_access_token(self, token: str):
         """

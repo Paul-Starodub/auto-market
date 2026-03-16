@@ -1,4 +1,3 @@
-from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -50,10 +49,7 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    jwt_refresh_token = jwt_manager.create_refresh_token(
-        {"customer_id": customer.id},
-        expires_delta=timedelta(days=settings.refresh_token_expire_days),
-    )
+    jwt_refresh_token = jwt_manager.create_refresh_token({"sub": str(customer.id)})
     try:
         await crud.create_refresh_token(
             db=db,
@@ -67,10 +63,7 @@ async def login(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while processing the request.",
         )
-    jwt_access_token = jwt_manager.create_access_token(
-        {"customer_id": customer.id},
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
-    )
+    jwt_access_token = jwt_manager.create_access_token({"sub": str(customer.id)})
     return Token(
         access_token=jwt_access_token,
         refresh_token=jwt_refresh_token,
