@@ -6,9 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.category import crud, schemas
 from src.category.schemas import PaginatedCategoryResponse, Category
 from src.config import settings
+from src.customer.customers import get_current_customer
 from src.models.dependencies import get_db
 
-router = APIRouter(prefix="/categories", tags=["categories"])
+router = APIRouter(
+    prefix="/categories",
+    tags=["categories"],
+    dependencies=[Depends(get_current_customer)],
+)
 
 
 @router.get("/", response_model=PaginatedCategoryResponse)
