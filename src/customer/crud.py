@@ -1,3 +1,4 @@
+from datetime import datetime, UTC
 from sqlalchemy import select, func, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,8 +45,13 @@ async def delete_refresh_token(db: AsyncSession, token: str):
     await db.commit()
 
 
-async def delete_customer_refresh_tokens(db: AsyncSession, customer_id: int):
-    await db.execute(delete(models.RefreshTokenModel).where(models.RefreshTokenModel.customer_id == customer_id))
+async def delete_expired_refresh_tokens(db: AsyncSession, customer_id: int):
+    await db.execute(
+        delete(models.RefreshTokenModel).where(
+            models.RefreshTokenModel.customer_id == customer_id,
+            models.RefreshTokenModel.expires_at < datetime.now(UTC),
+        )
+    )
     await db.commit()
 
 

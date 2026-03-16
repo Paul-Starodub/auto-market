@@ -51,7 +51,7 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    await crud.delete_customer_refresh_tokens(db, customer.id)
+    await crud.delete_expired_refresh_tokens(db, customer.id)
     jwt_refresh_token = jwt_manager.create_refresh_token({"sub": str(customer.id)})
     try:
         await crud.create_refresh_token(
@@ -154,6 +154,17 @@ async def update_customer(
                 detail="Email already registered",
             )
     return await crud.update_customer(db, customer, customer_update)
+
+
+@router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    refresh_token: str,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    db_token = await crud.get_refresh_token(db, refresh_token)
+    if db_token and db_token.customer_id == current_customer.id:
+        await crud.delete_refresh_token(db, refresh_token)
 
 
 @router.delete("/{customer_id}/", status_code=status.HTTP_204_NO_CONTENT)
