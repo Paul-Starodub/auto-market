@@ -69,3 +69,12 @@ async def delete_customer(db: AsyncSession, customer):
     )
     await db.delete(customer)
     await db.commit()
+
+
+async def delete_customer_refresh_tokens(db: AsyncSession, customer_id: int):
+    await db.execute(
+        delete(models.RefreshTokenModel).where(
+            models.RefreshTokenModel.customer_id == customer_id
+        )
+    )
+    await db.commit()

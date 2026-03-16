@@ -56,6 +56,7 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    await crud.delete_customer_refresh_tokens(db, customer.id)
     jwt_refresh_token = jwt_manager.create_refresh_token({"sub": str(customer.id)})
     try:
         await crud.create_refresh_token(
