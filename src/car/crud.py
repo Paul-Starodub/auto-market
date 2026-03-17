@@ -10,18 +10,6 @@ async def get_car_by_id(db: AsyncSession, car_id: int):
     return result.scalars().first()
 
 
-# async def get_car_by_id(db: AsyncSession, car_id: int):  # TODO for future
-#     result = await db.execute(
-#         select(models.Car)
-#         .options(
-#             selectinload(models.Car.images),
-#             selectinload(models.Car.category),
-#         )
-#         .where(models.Car.id == car_id)
-#     )
-#     return result.scalars().first()
-
-
 async def create_car(db: AsyncSession, car_create: CarCreate):
     new_car = models.Car(**car_create.model_dump())
     db.add(new_car)
@@ -35,3 +23,8 @@ async def add_car_images(db: AsyncSession, car_id: int, file_paths: list[str]):
     db.add_all(images)
     await db.commit()
     return images
+
+
+async def get_car_images_by_car_id(db: AsyncSession, car_id: int):
+    result = await db.execute(select(models.CarImage).where(models.CarImage.car_id == car_id))
+    return result.scalars().all()

@@ -1,5 +1,6 @@
 from typing import Annotated
 
+from PIL import UnidentifiedImageError
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
@@ -9,7 +10,6 @@ from src.car.schemas import CarCreate, CarImage
 from src.config import settings
 from src.customer.image_utils import process_image
 from src.models.dependencies import get_db
-from PIL import UnidentifiedImageError
 
 MAX_FILE_SIZE = settings.max_upload_size_bytes
 
@@ -49,4 +49,13 @@ async def upload_car_images(
             ) from err
         saved_file_paths.append(f"media/pics/{filename}")
     images = await crud.add_car_images(db, car_id, saved_file_paths)
+    return images
+
+
+@router.get("/{car_id}/images", response_model=list[CarImage])
+async def list_car_images(
+    car_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    images = await crud.get_car_images_by_car_id(db, car_id)
     return images

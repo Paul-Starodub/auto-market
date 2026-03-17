@@ -73,6 +73,5 @@ class CarImageUpdate(CarImageCreate):
 class CarImage(BaseModel):
     id: int
     file_path: str
-    car: Car
 
     model_config = ConfigDict(from_attributes=True)
