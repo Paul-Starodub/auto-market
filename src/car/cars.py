@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from src.car import crud
-from src.car.schemas import CarCreate, CarImage, CarImagesDelete
+from src.car.crud import update_car, list_cars, get_car_by_id
+from src.car.schemas import CarCreate, CarImage, CarImagesDelete, Car, CarUpdate
 from src.config import settings
 from src.customer.image_utils import process_image
 from src.models.dependencies import get_db
@@ -16,12 +17,37 @@ MAX_FILE_SIZE = settings.max_upload_size_bytes
 router = APIRouter(prefix="/cars", tags=["cars"])
 
 
+@router.get("/", response_model=list[Car])  # TODO pagination
+async def list_cars_endpoint(db: Annotated[AsyncSession, Depends(get_db)]):
+    return await list_cars(db)
+
+
+@router.get("/{car_id}/", response_model=Car)
+async def get_car_endpoint(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+    car = await get_car_by_id(db, car_id)
+    if not car:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
+    return car
+
+
 @router.post("/")
 async def create_car(car_create: CarCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     return await crud.create_car(db=db, car_create=car_create)
 
 
-@router.post("/{car_id}/images", response_model=list[CarImage])
+@router.patch("/{car_id}/", response_model=Car)
+async def update_car_endpoint(
+    car_id: int,
+    car_update: CarUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    updated_car = await update_car(db, car_id, car_update)
+    if not updated_car:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
+    return updated_car
+
+
+@router.post("/{car_id}/images/", response_model=list[CarImage])
 async def upload_car_images(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -52,7 +78,7 @@ async def upload_car_images(
     return images
 
 
-@router.get("/{car_id}/images", response_model=list[CarImage])
+@router.get("/{car_id}/images/", response_model=list[CarImage])
 async def list_car_images(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -61,7 +87,17 @@ async def list_car_images(
     return images
 
 
-@router.delete("/{car_id}/images", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{car_id}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_car_endpoint(
+    car_id: int,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    car = await crud.delete_car(db, car_id)
+    if not car:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
+
+
+@router.delete("/{car_id}/images/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_car_images_endpoint(
     car_id: int,
     payload: CarImagesDelete,
