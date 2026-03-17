@@ -1,5 +1,4 @@
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -10,13 +9,13 @@ from src.models.car import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
 class CarBase(BaseModel):
     brand: str
     model: str
-    car_type: Optional[CarTypeEnum] = None
-    fuel_type: Optional[FuelTypeEnum] = None
-    transmission_type: Optional[TransmissionTypeEnum] = None
+    car_type: CarTypeEnum | None = None
+    fuel_type: FuelTypeEnum | None = None
+    transmission_type: TransmissionTypeEnum | None = None
     start_year: int
     end_year: int
     cost: Decimal
-    category_id: Optional[int] = None
+    category_id: int | None = None
 
     @model_validator(mode="before")
     def check_years(cls, values):
@@ -32,27 +31,48 @@ class CarCreate(CarBase):
 
 
 class CarUpdate(BaseModel):
-    brand: Optional[str] = None
-    model: Optional[str] = None
-    car_type: Optional[CarTypeEnum] = None
-    fuel_type: Optional[FuelTypeEnum] = None
-    transmission_type: Optional[TransmissionTypeEnum] = None
-    start_year: int
-    end_year: int
-    cost: Decimal
-    category_id: Optional[int] = None
+    brand: str | None = None
+    model: str | None = None
+    car_type: CarTypeEnum | None = None
+    fuel_type: FuelTypeEnum | None = None
+    transmission_type: TransmissionTypeEnum | None = None
+    start_year: int | None = None
+    end_year: int | None = None
+    cost: Decimal | None = None
+    category_id: int | None = None
 
 
 class Car(BaseModel):
     id: int
     brand: str
     model: str
-    car_type: Optional[CarTypeEnum] = None
-    fuel_type: Optional[FuelTypeEnum] = None
-    transmission_type: Optional[TransmissionTypeEnum] = None
+    car_type: CarTypeEnum | None = None
+    fuel_type: FuelTypeEnum | None = None
+    transmission_type: TransmissionTypeEnum | None = None
     start_year: int
     end_year: int
     cost: Decimal
-    category: Optional[Category]
+    category: Category | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CarImageBase(BaseModel):
+    file_path: str
+    car_id: int
+
+
+class CarImageCreate(CarImageBase):
+    pass
+
+
+class CarImageUpdate(CarImageCreate):
+    pass
+
+
+class CarImage(BaseModel):
+    id: int
+    file_path: str
+    car: Car
 
     model_config = ConfigDict(from_attributes=True)
