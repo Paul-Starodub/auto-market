@@ -18,6 +18,9 @@ from src.customer.schemas import (
     CustomerPublic,
     CustomerUpdate,
     Refresh,
+    Profile,
+    ProfileCreate,
+    ProfileUpdate,
 )
 from src.customer.security.auth import CurrentCustomer
 from src.customer.security.dependencies import get_jwt_auth_manager
@@ -235,3 +238,49 @@ async def delete_customer_picture(
     await db.refresh(current_customer)
     delete_image(old_filename)
     return current_customer
+
+
+@router.get("/me/profile/", response_model=Profile)
+async def get_my_profile(
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    profile = await crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    return profile
+
+
+@router.post("/me/profile/", response_model=Profile, status_code=status.HTTP_201_CREATED)
+async def create_my_profile(
+    data: ProfileCreate,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    existing = await crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
+    if existing:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Profile already exists")
+    return await crud.create_profile(db=db, customer_id=current_customer.id, data=data)
+
+
+@router.patch("/me/profile/", response_model=Profile)
+async def update_my_profile(
+    data: ProfileUpdate,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    profile = await crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    return await crud.update_profile(db=db, profile=profile, data=data)
+
+
+@router.delete("/me/profile/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_my_profile(
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    profile = await crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    await crud.delete_profile(db=db, profile=profile)

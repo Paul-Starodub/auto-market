@@ -12,7 +12,7 @@ from src.models.dependencies import get_db
 if TYPE_CHECKING:
     from src import models
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="customers/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="customers/login")
 
 
 async def get_current_customer(
