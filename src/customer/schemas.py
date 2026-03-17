@@ -41,5 +41,5 @@ class Token(BaseModel):
     token_type: str
 
 
-class Logout(BaseModel):
+class Refresh(BaseModel):
     refresh_token: str

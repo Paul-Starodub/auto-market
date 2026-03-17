@@ -17,7 +17,7 @@ from src.customer.schemas import (
     Token,
     CustomerPublic,
     CustomerUpdate,
-    Logout,
+    Refresh,
 )
 from src.customer.security.auth import CurrentCustomer
 from src.customer.security.dependencies import get_jwt_auth_manager
@@ -78,10 +78,11 @@ async def login(
 
 @router.post("/refresh/", response_model=Token)
 async def refresh_tokens(
-    refresh_token: str,
+    payload: Refresh,
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ):
+    refresh_token = payload.refresh_token
     customer_id = jwt_manager.decode_refresh_token(refresh_token)
     if not customer_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
@@ -103,19 +104,11 @@ async def refresh_tokens(
         token=new_refresh_token,
         days_valid=settings.refresh_token_expire_days,
     )
-    return Token(
-        access_token=new_access_token,
-        refresh_token=new_refresh_token,
-        token_type="bearer",
-    )
+    return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 
 @router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(
-    payload: Logout,
-    current_customer: CurrentCustomer,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
+async def logout(payload: Refresh, current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
     db_token = await crud.get_refresh_token(db, payload.refresh_token)
     if db_token and db_token.customer_id == current_customer.id:
         await crud.delete_refresh_token(db, payload.refresh_token)
