@@ -75,3 +75,7 @@ class CarImage(BaseModel):
     file_path: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CarImagesDelete(BaseModel):
+    image_ids: list[int]

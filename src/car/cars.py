@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from src.car import crud
-from src.car.schemas import CarCreate, CarImage
+from src.car.schemas import CarCreate, CarImage, CarImagesDelete
 from src.config import settings
 from src.customer.image_utils import process_image
 from src.models.dependencies import get_db
@@ -59,3 +59,14 @@ async def list_car_images(
 ):
     images = await crud.get_car_images_by_car_id(db, car_id)
     return images
+
+
+@router.delete("/{car_id}/images", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_car_images_endpoint(
+    car_id: int,
+    payload: CarImagesDelete,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    deleted_count = await crud.delete_car_images(db, payload.image_ids, car_id)
+    if deleted_count == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No images found to delete")

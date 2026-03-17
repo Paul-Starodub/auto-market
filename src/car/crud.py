@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,3 +30,18 @@ async def add_car_images(db: AsyncSession, car_id: int, file_paths: list[str]):
 async def get_car_images_by_car_id(db: AsyncSession, car_id: int):
     result = await db.execute(select(models.CarImage).where(models.CarImage.car_id == car_id))
     return result.scalars().all()
+
+
+async def delete_car_images(db: AsyncSession, image_ids: list[int], car_id: int):
+    result = await db.execute(
+        select(models.CarImage).where(models.CarImage.id.in_(image_ids), models.CarImage.car_id == car_id)
+    )
+    images = result.scalars().all()
+    for image in images:
+        filepath = Path(image.file_path)
+        if filepath.exists():
+            filepath.unlink()
+    for image in images:
+        await db.delete(image)
+    await db.commit()
+    return len(images)
