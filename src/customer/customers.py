@@ -38,7 +38,7 @@ async def create_customer(customer: CustomerCreate, db: Annotated[AsyncSession, 
     return await crud.create_customer(db=db, customer=customer)
 
 
-@router.post("/token/", response_model=Token)
+@router.post("/login/", response_model=Token)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
