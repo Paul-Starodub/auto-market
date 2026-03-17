@@ -48,7 +48,7 @@ async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ):
-    customer = await crud.get_customer_by_email(db, form_data.username)
+    customer = await crud.get_customer_by_email(db=db, email=form_data.username)
     if not customer or not verify_password(form_data.password, customer.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -64,7 +64,7 @@ async def login(
             token=jwt_refresh_token,
             days_valid=settings.refresh_token_expire_days,
         )
-        await crud.cleanup_old_refresh_tokens(db, customer.id, keep_latest=5)
+        await crud.cleanup_old_refresh_tokens(db=db, customer_id=customer.id, keep_latest=5)
     except SQLAlchemyError:
         await db.rollback()
         raise HTTPException(
@@ -89,16 +89,16 @@ async def refresh_tokens(
     customer_id = jwt_manager.decode_refresh_token(refresh_token)
     if not customer_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
-    db_token = await crud.get_refresh_token(db, refresh_token)
+    db_token = await crud.get_refresh_token(db=db, token=refresh_token)
     if not db_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Refresh token not found",
         )
     if db_token.expires_at < datetime.now(UTC):
-        await crud.delete_refresh_token(db, refresh_token)
+        await crud.delete_refresh_token(db=db, token=refresh_token)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
-    await crud.delete_refresh_token(db, refresh_token)
+    await crud.delete_refresh_token(db=db, token=refresh_token)
     new_access_token = jwt_manager.create_access_token({"sub": str(customer_id)})
     new_refresh_token = jwt_manager.create_refresh_token({"sub": str(customer_id)})
     await crud.create_refresh_token(
@@ -112,9 +112,9 @@ async def refresh_tokens(
 
 @router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(payload: Refresh, current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
-    db_token = await crud.get_refresh_token(db, payload.refresh_token)
+    db_token = await crud.get_refresh_token(db=db, token=payload.refresh_token)
     if db_token and db_token.customer_id == current_customer.id:
-        await crud.delete_refresh_token(db, payload.refresh_token)
+        await crud.delete_refresh_token(db=db, token=payload.refresh_token)
 
 
 @router.get("/me/", response_model=CustomerPrivate)
@@ -124,7 +124,7 @@ async def get_current_customer(current_customer: CurrentCustomer):
 
 @router.get("/{customer_id}/", response_model=CustomerPublic)
 async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)], _: CurrentCustomer):
-    customer = await crud.get_customer_by_id(db, customer_id)
+    customer = await crud.get_customer_by_id(db=db, customer_id=customer_id)
     if not customer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
     return customer
@@ -142,27 +142,27 @@ async def update_customer(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this customer",
         )
-    customer = await crud.get_customer_by_id(db, customer_id)
+    customer = await crud.get_customer_by_id(db=db, customer_id=customer_id)
     if not customer:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Customer not found",
         )
     if customer_update.username and customer_update.username.lower() != customer.username.lower():
-        existing = await crud.get_customer_by_username(db, customer_update.username)
+        existing = await crud.get_customer_by_username(db=db, username=customer_update.username)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Username already exists",
             )
     if customer_update.email and customer_update.email.lower() != customer.email:
-        existing = await crud.get_customer_by_email(db, customer_update.email)
+        existing = await crud.get_customer_by_email(db=db, email=customer_update.email)
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered",
             )
-    return await crud.update_customer(db, customer, customer_update)
+    return await crud.update_customer(db=db, customer=customer, customer_update=customer_update)
 
 
 @router.delete("/{customer_id}/", status_code=status.HTTP_204_NO_CONTENT)
@@ -176,10 +176,10 @@ async def delete_customer(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this customer",
         )
-    customer = await crud.get_customer_by_id(db, customer_id)
+    customer = await crud.get_customer_by_id(db=db, customer_id=customer_id)
     if not customer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
-    await crud.delete_customer(db, customer)
+    await crud.delete_customer(db=db, customer=customer)
 
 
 @router.patch("/{customer_id}/picture/", response_model=CustomerPrivate)
