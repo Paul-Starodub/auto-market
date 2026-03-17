@@ -126,7 +126,7 @@ async def get_current_customer(current_customer: CurrentCustomer):
 
 
 @router.get("/{customer_id}/", response_model=CustomerPublic)
-async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)], _: CurrentCustomer):
     customer = await crud.get_customer_by_id(db, customer_id)
     if not customer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
