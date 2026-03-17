@@ -52,7 +52,7 @@ async def update_car_endpoint(
 async def upload_car_images(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
-    files: list[UploadFile] = File(...),
+    files: Annotated[list[UploadFile], File(description="Multiple files as UploadFile")],
 ):
     car = await crud.get_car_by_id(db, car_id)
     if not car:
