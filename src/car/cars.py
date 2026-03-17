@@ -19,12 +19,12 @@ router = APIRouter(prefix="/cars", tags=["cars"], dependencies=[Depends(get_curr
 
 
 @router.get("/", response_model=list[Car])  # TODO pagination
-async def list_cars_endpoint(db: Annotated[AsyncSession, Depends(get_db)]):
+async def list_cars(db: Annotated[AsyncSession, Depends(get_db)]):
     return await list_cars(db)
 
 
 @router.get("/{car_id}/", response_model=Car)
-async def get_car_endpoint(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     car = await get_car_by_id(db, car_id)
     if not car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
@@ -37,7 +37,7 @@ async def create_car(car_create: CarCreate, db: Annotated[AsyncSession, Depends(
 
 
 @router.patch("/{car_id}/", response_model=Car)
-async def update_car_endpoint(
+async def update_car(
     car_id: int,
     car_update: CarUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -89,7 +89,7 @@ async def list_car_images(
 
 
 @router.delete("/{car_id}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_car_endpoint(
+async def delete_car(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -99,7 +99,7 @@ async def delete_car_endpoint(
 
 
 @router.delete("/{car_id}/images/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_car_images_endpoint(
+async def delete_car_images(
     car_id: int,
     payload: CarImagesDelete,
     db: Annotated[AsyncSession, Depends(get_db)],

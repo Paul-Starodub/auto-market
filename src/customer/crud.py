@@ -93,3 +93,29 @@ async def delete_customer(db: AsyncSession, customer):
     await db.commit()
     if old_filename:
         delete_image(old_filename)
+
+
+async def get_profile_by_customer_id(db: AsyncSession, customer_id: int):
+    result = await db.execute(select(models.Profile).where(models.Profile.customer_id == customer_id))
+    return result.scalars().first()
+
+
+async def create_profile(db: AsyncSession, customer_id: int, data):
+    profile = models.Profile(customer_id=customer_id, **data.model_dump())
+    db.add(profile)
+    await db.commit()
+    await db.refresh(profile)
+    return profile
+
+
+async def update_profile(db: AsyncSession, profile, data):
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(profile, field, value)
+    await db.commit()
+    await db.refresh(profile)
+    return profile
+
+
+async def delete_profile(db: AsyncSession, profile):
+    await db.delete(profile)
+    await db.commit()
