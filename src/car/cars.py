@@ -2,11 +2,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from src.car import crud
 from src.car.schemas import CarCreate, CarImage
+from src.config import settings
 from src.customer.image_utils import process_image
 from src.models.dependencies import get_db
+from PIL import UnidentifiedImageError
+
+MAX_FILE_SIZE = settings.max_upload_size_bytes
 
 router = APIRouter(prefix="/cars", tags=["cars"])
 
@@ -25,13 +30,23 @@ async def upload_car_images(
     car = await crud.get_car_by_id(db, car_id)
     if not car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
-    file_paths = []
+    saved_file_paths = []
     for file in files:
         if not file.content_type.startswith("image/"):
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only images allowed")
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"{file.filename} is not an image")
         content = await file.read()
-        filename = process_image(content)
-        file_path = f"media/pics/{filename}"
-        file_paths.append(file_path)
-    images = await crud.add_car_images(db, car_id, file_paths)
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"{file.filename} exceeds maximum size of {MAX_FILE_SIZE // (1024*1024)} MB",
+            )
+        try:
+            filename = await run_in_threadpool(process_image, content)
+        except UnidentifiedImageError as err:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid image file: {file.filename}. Please upload a valid image.",
+            ) from err
+        saved_file_paths.append(f"media/pics/{filename}")
+    images = await crud.add_car_images(db, car_id, saved_file_paths)
     return images
