@@ -9,12 +9,13 @@ from src.car import crud
 from src.car.crud import update_car, list_cars, get_car_by_id
 from src.car.schemas import CarCreate, CarImage, CarImagesDelete, Car, CarUpdate
 from src.config import settings
+from src.customer.customers import get_current_customer
 from src.customer.image_utils import process_image
 from src.models.dependencies import get_db
 
 MAX_FILE_SIZE = settings.max_upload_size_bytes
 
-router = APIRouter(prefix="/cars", tags=["cars"])
+router = APIRouter(prefix="/cars", tags=["cars"], dependencies=[Depends(get_current_customer)])
 
 
 @router.get("/", response_model=list[Car])  # TODO pagination
