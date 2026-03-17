@@ -17,6 +17,7 @@ from src.customer.schemas import (
     Token,
     CustomerPublic,
     CustomerUpdate,
+    Logout,
 )
 from src.customer.security.auth import CurrentCustomer
 from src.customer.security.dependencies import get_jwt_auth_manager
@@ -111,13 +112,13 @@ async def refresh_tokens(
 
 @router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(
-    refresh_token: str,
+    payload: Logout,
     current_customer: CurrentCustomer,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    db_token = await crud.get_refresh_token(db, refresh_token)
+    db_token = await crud.get_refresh_token(db, payload.refresh_token)
     if db_token and db_token.customer_id == current_customer.id:
-        await crud.delete_refresh_token(db, refresh_token)
+        await crud.delete_refresh_token(db, payload.refresh_token)
 
 
 @router.get("/me/", response_model=CustomerPrivate)
