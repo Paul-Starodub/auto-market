@@ -214,7 +214,7 @@ async def upload_customer_picture(
 
 
 @router.delete("/{customer_id}/picture/", response_model=CustomerPrivate)
-async def delete_user_picture(
+async def delete_customer_picture(
     customer_id: int,
     current_customer: CurrentCustomer,
     db: Annotated[AsyncSession, Depends(get_db)],
