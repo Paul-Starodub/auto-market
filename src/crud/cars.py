@@ -9,7 +9,11 @@ from src.schemas import CarCreate, CarUpdate
 
 
 async def get_car_by_id(db: AsyncSession, car_id: int):
-    result = await db.execute(select(database.Car).where(database.Car.id == car_id))
+    result = await db.execute(
+        select(database.Car)
+        .options(joinedload(database.Car.images), joinedload(database.Car.category))
+        .where(database.Car.id == car_id)
+    )
     return result.scalars().first()
 
 
