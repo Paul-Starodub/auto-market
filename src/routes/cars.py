@@ -5,13 +5,12 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
-from src.car import crud
-from src.car.crud import update_car, list_cars, get_car_by_id
-from src.car.schemas import CarCreate, CarImage, CarImagesDelete, Car, CarUpdate
 from src.config import settings
-from src.customer.customers import get_current_customer
-from src.customer.image_utils import process_image
-from src.models.dependencies import get_db
+from src.crud import cars_crud
+from src.database import get_db
+from src.schemas import Car, CarCreate, CarUpdate, CarImage, CarImagesDelete
+from src.security.auth import get_current_customer
+from src.services.image_utils import process_image
 
 MAX_FILE_SIZE = settings.max_upload_size_bytes
 
@@ -20,12 +19,12 @@ router = APIRouter(prefix="/cars", tags=["cars"], dependencies=[Depends(get_curr
 
 @router.get("/", response_model=list[Car])  # TODO pagination
 async def list_cars(db: Annotated[AsyncSession, Depends(get_db)]):
-    return await list_cars(db)
+    return await cars_crud.list_cars(db)
 
 
 @router.get("/{car_id}/", response_model=Car)
 async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
-    car = await get_car_by_id(db, car_id)
+    car = await cars_crud.get_car_by_id(db, car_id)
     if not car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
     return car
@@ -33,7 +32,7 @@ async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 @router.post("/")
 async def create_car(car_create: CarCreate, db: Annotated[AsyncSession, Depends(get_db)]):
-    return await crud.create_car(db=db, car_create=car_create)
+    return await cars_crud.create_car(db=db, car_create=car_create)
 
 
 @router.patch("/{car_id}/", response_model=Car)
@@ -54,7 +53,7 @@ async def upload_car_images(
     db: Annotated[AsyncSession, Depends(get_db)],
     files: Annotated[list[UploadFile], File(description="Multiple files as UploadFile")],
 ):
-    car = await crud.get_car_by_id(db, car_id)
+    car = await cars_crud.get_car_by_id(db, car_id)
     if not car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
     saved_file_paths = []
@@ -75,7 +74,7 @@ async def upload_car_images(
                 detail=f"Invalid image file: {file.filename}. Please upload a valid image.",
             ) from err
         saved_file_paths.append(f"media/pics/{filename}")
-    images = await crud.add_car_images(db, car_id, saved_file_paths)
+    images = await cars_crud.add_car_images(db, car_id, saved_file_paths)
     return images
 
 
@@ -84,7 +83,7 @@ async def list_car_images(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    images = await crud.get_car_images_by_car_id(db, car_id)
+    images = await cars_crud.get_car_images_by_car_id(db, car_id)
     return images
 
 
@@ -93,7 +92,7 @@ async def delete_car(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    car = await crud.delete_car(db, car_id)
+    car = await cars_crud.delete_car(db, car_id)
     if not car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
 
@@ -104,6 +103,6 @@ async def delete_car_images(
     payload: CarImagesDelete,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    deleted_count = await crud.delete_car_images(db, payload.image_ids, car_id)
+    deleted_count = await cars_crud.delete_car_images(db, payload.image_ids, car_id)
     if deleted_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No images found to delete")

@@ -4,24 +4,24 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from src import models
-from src.car.schemas import CarCreate, CarUpdate
+from src import database
+from src.schemas import CarCreate, CarUpdate
 
 
 async def get_car_by_id(db: AsyncSession, car_id: int):
-    result = await db.execute(select(models.Car).where(models.Car.id == car_id))
+    result = await db.execute(select(database.Car).where(database.Car.id == car_id))
     return result.scalars().first()
 
 
 async def list_cars(db: AsyncSession):
     result = await db.execute(
-        select(models.Car).options(joinedload(models.Car.images), joinedload(models.Car.category))
+        select(database.Car).options(joinedload(database.Car.images), joinedload(database.Car.category))
     )
     return result.unique().scalars().all()
 
 
 async def create_car(db: AsyncSession, car_create: CarCreate):
-    new_car = models.Car(**car_create.model_dump())
+    new_car = database.Car(**car_create.model_dump())
     db.add(new_car)
     await db.commit()
     await db.refresh(new_car)
@@ -29,14 +29,14 @@ async def create_car(db: AsyncSession, car_create: CarCreate):
 
 
 async def add_car_images(db: AsyncSession, car_id: int, file_paths: list[str]):
-    images = [models.CarImage(file_path=path, car_id=car_id) for path in file_paths]
+    images = [database.CarImage(file_path=path, car_id=car_id) for path in file_paths]
     db.add_all(images)
     await db.commit()
     return images
 
 
 async def get_car_images_by_car_id(db: AsyncSession, car_id: int):
-    result = await db.execute(select(models.CarImage).where(models.CarImage.car_id == car_id))
+    result = await db.execute(select(database.CarImage).where(database.CarImage.car_id == car_id))
     return result.scalars().all()
 
 
@@ -56,13 +56,13 @@ async def delete_car(db: AsyncSession, car_id: int):
     car = await get_car_by_id(db, car_id)
     if not car:
         return None
-    result = await db.execute(select(models.CarImage).where(models.CarImage.car_id == car_id))
+    result = await db.execute(select(database.CarImage).where(database.CarImage.car_id == car_id))
     images = result.scalars().all()
     for image in images:
         filepath = Path(image.file_path)
         if filepath.exists():
             filepath.unlink()
-    await db.execute(delete(models.CarImage).where(models.CarImage.car_id == car_id))
+    await db.execute(delete(database.CarImage).where(database.CarImage.car_id == car_id))
     await db.delete(car)
     await db.commit()
     return car
@@ -70,7 +70,7 @@ async def delete_car(db: AsyncSession, car_id: int):
 
 async def delete_car_images(db: AsyncSession, image_ids: list[int], car_id: int):
     result = await db.execute(
-        select(models.CarImage).where(models.CarImage.id.in_(image_ids), models.CarImage.car_id == car_id)
+        select(database.CarImage).where(database.CarImage.id.in_(image_ids), database.CarImage.car_id == car_id)
     )
     images = result.scalars().all()
     for image in images:

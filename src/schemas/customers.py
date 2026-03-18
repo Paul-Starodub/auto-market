@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from src.customer.validators import validate_password_strength
+from src.database.validators.customers import validate_password_strength
 
 
 class Token(BaseModel):

@@ -2,8 +2,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from src.category.schemas import Category
-from src.models.car import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
+from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
+from src.schemas import Category
 
 
 class CarBase(BaseModel):

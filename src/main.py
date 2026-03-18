@@ -4,9 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from src.category import categories_router
-from src.customer import customers_router
-from src.car import cars_router
+from src.routes import categories_router, cars_router, customers_router
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

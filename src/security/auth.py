@@ -7,10 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.customer.security.dependencies import get_jwt_auth_manager
 from src.customer.security.token_manager import JWTAuthManager
-from src.models.dependencies import get_db
+from src.database.dependencies import get_db
 
 if TYPE_CHECKING:
-    from src import models
+    from src import database
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="customers/login")
 
@@ -19,8 +19,8 @@ async def get_current_customer(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
-) -> "models.Customer":
-    from src import models
+) -> "database.Customer":
+    from src import database
 
     customer_id = jwt_manager.decode_access_token(token)
     if customer_id is None:
@@ -38,7 +38,7 @@ async def get_current_customer(
             headers={"WWW-Authenticate": "Bearer"},
         )
     result = await db.execute(
-        select(models.Customer).where(models.Customer.id == customer_id_int),
+        select(database.Customer).where(database.Customer.id == customer_id_int),
     )
     customer = result.scalars().first()
     if not customer:
