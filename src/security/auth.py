@@ -5,9 +5,9 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.customer.security.dependencies import get_jwt_auth_manager
-from src.customer.security.token_manager import JWTAuthManager
-from src.database.dependencies import get_db
+from src.database import get_db
+from src.security.dependencies import get_jwt_auth_manager
+from src.security.token_manager import JWTAuthManager
 
 if TYPE_CHECKING:
     from src import database

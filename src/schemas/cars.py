@@ -3,7 +3,8 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
-from src.schemas import Category
+
+# from src.schemas import Category
 
 
 class CarBase(BaseModel):
@@ -52,7 +53,7 @@ class Car(BaseModel):
     start_year: int
     end_year: int
     cost: Decimal
-    category: Category | None = None
+    # category: Category | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

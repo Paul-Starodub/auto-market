@@ -1,5 +1,5 @@
 from src.config import settings
-from src.customer.security.token_manager import JWTAuthManager
+from src.security.token_manager import JWTAuthManager
 
 
 def get_jwt_auth_manager() -> JWTAuthManager:
