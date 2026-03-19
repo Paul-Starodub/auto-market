@@ -3,16 +3,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.category import crud, schemas
-from src.category.schemas import PaginatedCategoryResponse, Category
-from src.config import settings
-from src.customer.customers import get_current_customer
-from src.models.dependencies import get_db
+from src.core.config import settings
+from src.database import get_db
+from src.crud import categories_crud
+from src.schemas import PaginatedCategoryResponse, Category, CategoryCreate, CategoryUpdate
+from src.security.auth import get_current_customer, http_bearer
 
 router = APIRouter(
     prefix="/categories",
     tags=["categories"],
-    dependencies=[Depends(get_current_customer)],
+    dependencies=[
+        Depends(get_current_customer),
+        Depends(http_bearer),  # optional to see a form for token in swagger
+    ],
 )
 
 
@@ -20,13 +23,13 @@ router = APIRouter(
 async def get_categories(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.entities_per_page,
 ):
-    total = await crud.get_categories_count(db)
-    categories = await crud.get_categories(db=db, skip=skip, limit=limit)
+    total = await categories_crud.get_categories_count(db)
+    categories = await categories_crud.get_categories(db=db, skip=skip, limit=limit)
     has_more = skip + len(categories) < total
     return PaginatedCategoryResponse(
-        categories=[schemas.Category.model_validate(cat) for cat in categories],
+        categories=[Category.model_validate(cat) for cat in categories],
         total=total,
         skip=skip,
         limit=limit,
@@ -36,26 +39,26 @@ async def get_categories(
 
 @router.get("/{category_id}/", response_model=Category)
 async def get_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
-    return await crud.get_category(db=db, category_id=category_id)
+    return await categories_crud.get_category(db=db, category_id=category_id)
 
 
 @router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
 async def create_category(
     db: Annotated[AsyncSession, Depends(get_db)],
-    category_create: schemas.CategoryCreate,
+    category_create: CategoryCreate,
 ):
-    return await crud.create_category(db=db, category_create=category_create)
+    return await categories_crud.create_category(db=db, category_create=category_create)
 
 
 @router.put("/{category_id}/", response_model=Category)
 async def update_category(
     db: Annotated[AsyncSession, Depends(get_db)],
     category_id: int,
-    category_update: schemas.CategoryUpdate,
+    category_update: CategoryUpdate,
 ):
-    return await crud.update_category(db=db, category_id=category_id, category_update=category_update)
+    return await categories_crud.update_category(db=db, category_id=category_id, category_update=category_update)
 
 
 @router.delete("/{category_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
-    await crud.delete_category(db, category_id)
+    await categories_crud.delete_category(db, category_id)

@@ -1,21 +1,27 @@
+from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator, Field
 
-from src.category.schemas import Category
-from src.models.car import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
+from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
+from src.schemas.categories import PaginatedBaseResponse
+
+
+class CarCategory(BaseModel):
+    id: int
+    name: str
 
 
 class CarBase(BaseModel):
-    brand: str
-    model: str
+    brand: str = Field(..., min_length=1, max_length=30)
+    model: str = Field(..., min_length=1, max_length=50)
     car_type: CarTypeEnum | None = None
     fuel_type: FuelTypeEnum | None = None
     transmission_type: TransmissionTypeEnum | None = None
-    start_year: int
-    end_year: int
-    cost: Decimal
-    category_id: int | None = None
+    start_year: int = Field(..., ge=1886, le=datetime.now().year)
+    end_year: int = Field(..., ge=1886, le=datetime.now().year)
+    cost: Decimal = Field(..., gt=0, max_digits=15, decimal_places=2, description="Car price")
+    category_id: int | None = Field(default=None, gt=0, description="Category ID")
 
     @model_validator(mode="before")
     def check_years(cls, values):
@@ -44,21 +50,24 @@ class CarUpdate(BaseModel):
 
 class Car(BaseModel):
     id: int
-    brand: str
-    model: str
+    brand: str = Field(..., min_length=1, max_length=30)
+    model: str = Field(..., min_length=1, max_length=50)
     car_type: CarTypeEnum | None = None
     fuel_type: FuelTypeEnum | None = None
     transmission_type: TransmissionTypeEnum | None = None
-    start_year: int
-    end_year: int
-    cost: Decimal
-    category: Category | None = None
+    start_year: int = Field(..., ge=1886, le=datetime.now().year)
+    end_year: int = Field(..., ge=1886, le=datetime.now().year)
+    cost: Decimal = Field(..., gt=0, max_digits=15, decimal_places=2, description="Car price")
 
     model_config = ConfigDict(from_attributes=True)
 
 
+class CarFull(Car):
+    category: CarCategory | None = None
+
+
 class CarImageBase(BaseModel):
-    file_path: str
+    file_path: str = Field(..., min_length=1, max_length=255)
     car_id: int
 
 
@@ -72,10 +81,14 @@ class CarImageUpdate(CarImageCreate):
 
 class CarImage(BaseModel):
     id: int
-    file_path: str
+    file_path: str = Field(..., min_length=1, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class CarImagesDelete(BaseModel):
     image_ids: list[int]
+
+
+class PaginatedCarResponse(PaginatedBaseResponse):
+    cars: list[Car]

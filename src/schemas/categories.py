@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PaginatedBaseResponse(BaseModel):
@@ -9,7 +9,7 @@ class PaginatedBaseResponse(BaseModel):
 
 
 class CategoryBase(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=20)
 
 
 class CategoryCreate(CategoryBase):

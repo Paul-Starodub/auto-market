@@ -4,29 +4,23 @@ from typing import TYPE_CHECKING
 from sqlalchemy import String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
-from src.customer import validators
-from src.customer.utils import generate_secure_token
-from src.models.base import Base
-from src.models.mixins import CustomerRelationMixin
+from src.database.models.base import Base
+from src.database.mixins import CustomerRelationMixin
+from src.database.validators.customers import validate_email
+from src.security.utils import generate_secure_token
 
 if TYPE_CHECKING:
-    from src.models.car import CustomerCar
+    from src.database import CustomerCar
 
 
 class Customer(Base):
     username: Mapped[str] = mapped_column(String(50), unique=True)
     email: Mapped[str] = mapped_column(String(120), unique=True)
     password_hash: Mapped[str] = mapped_column(String(200))
-    image_file: Mapped[str | None] = mapped_column(
-        String(200), nullable=True, default=None
-    )
+    image_file: Mapped[str | None] = mapped_column(String(200), nullable=True, default=None)
 
-    profile: Mapped["Profile"] = relationship(
-        back_populates="customer", cascade="all, delete-orphan"
-    )
-    cars: Mapped[list["CustomerCar"]] = relationship(
-        back_populates="customer", cascade="all, delete-orphan"
-    )
+    profile: Mapped["Profile"] = relationship(back_populates="customer", cascade="all, delete-orphan")
+    cars: Mapped[list["CustomerCar"]] = relationship(back_populates="customer", cascade="all, delete-orphan")
     refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
         back_populates="customer", cascade="all, delete-orphan"
     )
@@ -38,8 +32,8 @@ class Customer(Base):
         return "/static/customer_pics/default.jpg"
 
     @validates("email")
-    def validate_email(self, key, value) -> str:
-        return validators.validate_email(value.lower())
+    def validate_email_field(self, key, value) -> str:
+        return validate_email(value.lower())
 
     def __repr__(self) -> str:
         return f"User(username={self.username}, email={self.email}, password_hash={self.password_hash}, image_file={self.image_file})"
@@ -60,23 +54,17 @@ class Profile(CustomerRelationMixin, Base):
 class RefreshTokenModel(Base):
     __tablename__ = "refresh_tokens"
 
-    token: Mapped[str] = mapped_column(
-        String(512), unique=True, nullable=False, default=generate_secure_token
-    )
+    token: Mapped[str] = mapped_column(String(512), unique=True, nullable=False, default=generate_secure_token)
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc) + timedelta(days=1),
     )
-    customer_id: Mapped[int] = mapped_column(
-        ForeignKey("customers.id", ondelete="CASCADE")
-    )
+    customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id", ondelete="CASCADE"))
 
     customer: Mapped[Customer] = relationship(back_populates="refresh_tokens")
 
     @classmethod
-    def create(
-        cls, customer_id: int | Mapped[int], days_valid: int, token: str
-    ) -> "RefreshTokenModel":
+    def create(cls, customer_id: int | Mapped[int], days_valid: int, token: str) -> "RefreshTokenModel":
         """
         Factory method to create a new RefreshTokenModel instance.
 

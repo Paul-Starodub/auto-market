@@ -3,8 +3,8 @@ from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.category import schemas
-from src.models.car import Category
+from src import schemas
+from src.database import Category
 
 
 async def get_categories_count(db: AsyncSession) -> int:

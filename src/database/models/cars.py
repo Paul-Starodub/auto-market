@@ -6,10 +6,10 @@ from sqlalchemy import Enum as SQLAlchemyEnum, ForeignKey, UniqueConstraint
 from sqlalchemy import String, DECIMAL
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.models.base import Base
+from src.database.models.base import Base
 
 if TYPE_CHECKING:
-    from src.models.customer import Customer
+    from src.database.models.customers import Customer
 
 
 class CarTypeEnum(StrEnum):

@@ -4,7 +4,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import declared_attr, Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
-    from src.models.customer import Customer
+    from src.database import Customer
 
 
 class CustomerRelationMixin:
