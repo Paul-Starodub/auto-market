@@ -12,15 +12,15 @@ class CarCategory(BaseModel):
 
 
 class CarBase(BaseModel):
-    brand: str
-    model: str
+    brand: str = Field(..., min_length=1, max_length=30)
+    model: str = Field(..., min_length=1, max_length=50)
     car_type: CarTypeEnum | None = None
     fuel_type: FuelTypeEnum | None = None
     transmission_type: TransmissionTypeEnum | None = None
     start_year: int = Field(..., ge=1886, le=datetime.now().year)
     end_year: int = Field(..., ge=1886, le=datetime.now().year)
     cost: Decimal = Field(..., gt=0, max_digits=15, decimal_places=2, description="Car price")
-    category_id: int | None = Field(None, gt=0, description="Category ID")
+    category_id: int | None = Field(default=None, gt=0, description="Category ID")
 
     @model_validator(mode="before")
     def check_years(cls, values):
@@ -49,21 +49,21 @@ class CarUpdate(BaseModel):
 
 class Car(BaseModel):
     id: int
-    brand: str
-    model: str
+    brand: str = Field(..., min_length=1, max_length=30)
+    model: str = Field(..., min_length=1, max_length=50)
     car_type: CarTypeEnum | None = None
     fuel_type: FuelTypeEnum | None = None
     transmission_type: TransmissionTypeEnum | None = None
-    start_year: int
-    end_year: int
-    cost: Decimal
+    start_year: int = Field(..., ge=1886, le=datetime.now().year)
+    end_year: int = Field(..., ge=1886, le=datetime.now().year)
+    cost: Decimal = Field(..., gt=0, max_digits=15, decimal_places=2, description="Car price")
     category: CarCategory | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class CarImageBase(BaseModel):
-    file_path: str
+    file_path: str = Field(..., min_length=1, max_length=255)
     car_id: int
 
 
@@ -77,7 +77,7 @@ class CarImageUpdate(CarImageCreate):
 
 class CarImage(BaseModel):
     id: int
-    file_path: str
+    file_path: str = Field(..., min_length=1, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
 
