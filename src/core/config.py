@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_DIR = Path(__file__).parent.parent.parent
 
 
 class RunConfig(BaseModel):
@@ -39,7 +43,7 @@ class Settings(BaseSettings):
     entities_per_page: int = 10
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=BASE_DIR / ".env",
         env_nested_delimiter="__",
         case_sensitive=False,
     )
