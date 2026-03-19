@@ -20,6 +20,7 @@ __all__ = (
     "CategoryUpdate",
     "Category",
     "PaginatedCategoryResponse",
+    "CarFull",
 )
 
 from .customers import (
@@ -33,5 +34,15 @@ from .customers import (
     Token,
     Refresh,
 )
-from .cars import CarCreate, CarUpdate, Car, CarImageCreate, CarImageUpdate, CarImagesDelete, CarImage, CarCategory
+from .cars import (
+    CarCreate,
+    CarUpdate,
+    Car,
+    CarImageCreate,
+    CarImageUpdate,
+    CarImagesDelete,
+    CarImage,
+    CarCategory,
+    CarFull,
+)
 from .categories import CategoryCreate, CategoryUpdate, Category, PaginatedCategoryResponse

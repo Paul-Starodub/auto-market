@@ -1,14 +1,15 @@
 from typing import Annotated
 
 from PIL import UnidentifiedImageError
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
 from src.core.config import settings
 from src.crud import cars_crud
 from src.database import get_db
-from src.schemas import Car, CarCreate, CarUpdate, CarImage, CarImagesDelete
+from src.schemas import Car, CarCreate, CarUpdate, CarImage, CarImagesDelete, CarFull
+from src.schemas.cars import PaginatedCarResponse
 from src.security.auth import get_current_customer
 from src.services.image_utils import process_image
 
@@ -17,12 +18,25 @@ MAX_FILE_SIZE = settings.max_upload_size_bytes
 router = APIRouter(prefix="/cars", tags=["cars"], dependencies=[Depends(get_current_customer)])
 
 
-@router.get("/", response_model=list[Car])  # TODO pagination
-async def list_cars(db: Annotated[AsyncSession, Depends(get_db)]):
-    return await cars_crud.list_cars(db)
+@router.get("/", response_model=PaginatedCarResponse)
+async def list_cars(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.entities_per_page,
+):
+    total = await cars_crud.get_cars_count(db)
+    cars = await cars_crud.list_cars(db=db, skip=skip, limit=limit)
+    has_more = skip + len(cars) < total
+    return PaginatedCarResponse(
+        cars=[Car.model_validate(car) for car in cars],
+        total=total,
+        skip=skip,
+        limit=limit,
+        has_more=has_more,
+    )
 
 
-@router.get("/{car_id}/", response_model=Car)
+@router.get("/{car_id}/", response_model=CarFull)
 async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     car = await cars_crud.get_car_by_id(db, car_id)
     if not car:
@@ -33,13 +47,13 @@ async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 @router.post(
     "/",
     status_code=status.HTTP_201_CREATED,
-    response_model=Car,
+    response_model=CarFull,
 )
 async def create_car(car_create: CarCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     return await cars_crud.create_car(db=db, car_create=car_create)
 
 
-@router.patch("/{car_id}/", response_model=Car)
+@router.patch("/{car_id}/", response_model=CarFull)
 async def update_car(
     car_id: int,
     car_update: CarUpdate,

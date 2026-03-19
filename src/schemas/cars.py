@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
+from src.schemas.categories import PaginatedBaseResponse
 
 
 class CarCategory(BaseModel):
@@ -57,9 +58,12 @@ class Car(BaseModel):
     start_year: int = Field(..., ge=1886, le=datetime.now().year)
     end_year: int = Field(..., ge=1886, le=datetime.now().year)
     cost: Decimal = Field(..., gt=0, max_digits=15, decimal_places=2, description="Car price")
-    category: CarCategory | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CarFull(Car):
+    category: CarCategory | None = None
 
 
 class CarImageBase(BaseModel):
@@ -84,3 +88,7 @@ class CarImage(BaseModel):
 
 class CarImagesDelete(BaseModel):
     image_ids: list[int]
+
+
+class PaginatedCarResponse(PaginatedBaseResponse):
+    cars: list[Car]

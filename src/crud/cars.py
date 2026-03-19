@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -17,9 +17,17 @@ async def get_car_by_id(db: AsyncSession, car_id: int):
     return result.scalars().first()
 
 
-async def list_cars(db: AsyncSession):
+async def get_cars_count(db: AsyncSession) -> int:
+    result = await db.execute(select(func.count()).select_from(database.Car))
+    return result.scalar() or 0
+
+
+async def list_cars(db: AsyncSession, skip: int, limit: int):
     result = await db.execute(
-        select(database.Car).options(joinedload(database.Car.images), joinedload(database.Car.category))
+        select(database.Car)
+        .options(joinedload(database.Car.images), joinedload(database.Car.category))
+        .offset(skip)
+        .limit(limit)
     )
     return result.unique().scalars().all()
 
