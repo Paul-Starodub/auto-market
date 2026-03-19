@@ -1,13 +1,14 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
 
-if TYPE_CHECKING:
-    from src.schemas.categories import Category
+
+class CarCategory(BaseModel):
+    id: int
+    name: str
 
 
 class CarBase(BaseModel):
@@ -56,7 +57,7 @@ class Car(BaseModel):
     start_year: int
     end_year: int
     cost: Decimal
-    category: "Category | None" = None
+    category: CarCategory | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

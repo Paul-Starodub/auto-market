@@ -28,7 +28,7 @@ async def create_car(db: AsyncSession, car_create: CarCreate):
     new_car = database.Car(**car_create.model_dump())
     db.add(new_car)
     await db.commit()
-    await db.refresh(new_car)
+    await db.refresh(new_car, attribute_names=["category"])
     return new_car
 
 
@@ -52,7 +52,7 @@ async def update_car(db: AsyncSession, car_id: int, car_update: CarUpdate):
     for key, value in data.items():
         setattr(car, key, value)
     await db.commit()
-    await db.refresh(car)
+    await db.refresh(car, attribute_names=["category"])
     return car
 
 

@@ -45,7 +45,7 @@ async def update_car(
     car_update: CarUpdate,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    updated_car = await update_car(db, car_id, car_update)
+    updated_car = await cars_crud.update_car(db, car_id, car_update)
     if not updated_car:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Car not found")
     return updated_car

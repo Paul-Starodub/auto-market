@@ -15,6 +15,7 @@ __all__ = (
     "CarImageUpdate",
     "CarImagesDelete",
     "CarImage",
+    "CarCategory",
     "CategoryCreate",
     "CategoryUpdate",
     "Category",
@@ -32,8 +33,5 @@ from .customers import (
     Token,
     Refresh,
 )
-from .cars import CarCreate, CarUpdate, Car, CarImageCreate, CarImageUpdate, CarImagesDelete, CarImage
+from .cars import CarCreate, CarUpdate, Car, CarImageCreate, CarImageUpdate, CarImagesDelete, CarImage, CarCategory
 from .categories import CategoryCreate, CategoryUpdate, Category, PaginatedCategoryResponse
-
-Car.model_rebuild()
-Category.model_rebuild()
