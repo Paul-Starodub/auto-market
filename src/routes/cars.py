@@ -30,7 +30,11 @@ async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     return car
 
 
-@router.post("/")
+@router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=Car,
+)
 async def create_car(car_create: CarCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     return await cars_crud.create_car(db=db, car_create=car_create)
 
