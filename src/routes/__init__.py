@@ -1,10 +1,11 @@
-__all__ = (
-    "cars_router",
-    "categories_router",
-    "customers_router",
-)
-
+from fastapi import APIRouter
 
 from .cars import router as cars_router
 from .categories import router as categories_router
 from .customers import router as customers_router
+
+src_router = APIRouter()
+
+src_router.include_router(customers_router, prefix="/customers", tags=["customers"])
+src_router.include_router(cars_router, prefix="/cars", tags=["cars"])
+src_router.include_router(categories_router, prefix="/categories", tags=["categories"])

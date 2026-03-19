@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.config import settings
+from src.core.config import settings
 from src.database import get_db
 from src.crud import categories_crud
 from src.schemas import PaginatedCategoryResponse, Category, CategoryCreate, CategoryUpdate
@@ -23,7 +23,7 @@ router = APIRouter(
 async def get_categories(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
-    limit: Annotated[int, Query(ge=1, le=100)] = settings.posts_per_page,
+    limit: Annotated[int, Query(ge=1, le=100)] = settings.entities_per_page,
 ):
     total = await categories_crud.get_categories_count(db)
     categories = await categories_crud.get_categories(db=db, skip=skip, limit=limit)

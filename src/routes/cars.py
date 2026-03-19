@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
-from src.config import settings
+from src.core.config import settings
 from src.crud import cars_crud
 from src.database import get_db
 from src.schemas import Car, CarCreate, CarUpdate, CarImage, CarImagesDelete

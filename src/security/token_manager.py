@@ -3,7 +3,7 @@ from typing import Optional
 
 import jwt
 
-from src.config import settings
+from src.core.config import settings
 
 
 class JWTAuthManager:
@@ -19,9 +19,7 @@ class JWTAuthManager:
         self._secret_key_refresh = secret_key_refresh
         self._algorithm = algorithm
 
-    def _create_token(
-        self, data: dict, secret_key: str, expires_delta: timedelta
-    ) -> str:
+    def _create_token(self, data: dict, secret_key: str, expires_delta: timedelta) -> str:
         """
         Create a JWT token with provided data, secret key, and expiration time.
         """
@@ -47,9 +45,7 @@ class JWTAuthManager:
             return None
         return payload.get("sub")
 
-    def create_access_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """
         Create a new access token with a default or specified expiration time.
         """
@@ -59,9 +55,7 @@ class JWTAuthManager:
             expires_delta or timedelta(minutes=settings.access_token_expire_minutes),
         )
 
-    def create_refresh_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """
         Create a new refresh token with a default or specified expiration time.
         """
