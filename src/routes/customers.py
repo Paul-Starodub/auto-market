@@ -72,11 +72,7 @@ async def login(
             detail="An error occurred while processing the request.",
         )
     jwt_access_token = jwt_manager.create_access_token({"sub": str(customer.id)})
-    return Token(
-        access_token=jwt_access_token,
-        refresh_token=jwt_refresh_token,
-        token_type="bearer",
-    )
+    return Token(access_token=jwt_access_token, refresh_token=jwt_refresh_token)
 
 
 @router.post("/refresh/", response_model=Token)
@@ -241,10 +237,7 @@ async def delete_customer_picture(
 
 
 @router.get("/me/profile/", response_model=Profile)
-async def get_my_profile(
-    current_customer: CurrentCustomer,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
+async def get_my_profile(current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
     profile = await customers_crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
@@ -276,10 +269,7 @@ async def update_my_profile(
 
 
 @router.delete("/me/profile/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_my_profile(
-    current_customer: CurrentCustomer,
-    db: Annotated[AsyncSession, Depends(get_db)],
-):
+async def delete_my_profile(current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
     profile = await customers_crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
