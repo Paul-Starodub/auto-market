@@ -12,7 +12,7 @@ from src.security.token_manager import JWTAuthManager
 if TYPE_CHECKING:
     from src import database
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="customers/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/customers/login")
 http_bearer = HTTPBearer(auto_error=False)  # optional to see a form for token in swagger
 
 
