@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from src import database
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="customers/login")
+http_bearer = HTTPBearer(auto_error=False)  # optional to see a form for token in swagger
 
 
 async def get_current_customer(

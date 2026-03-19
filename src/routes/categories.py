@@ -7,12 +7,15 @@ from src.config import settings
 from src.database import get_db
 from src.crud import categories_crud
 from src.schemas import PaginatedCategoryResponse, Category, CategoryCreate, CategoryUpdate
-from src.security.auth import get_current_customer
+from src.security.auth import get_current_customer, http_bearer
 
 router = APIRouter(
     prefix="/categories",
     tags=["categories"],
-    dependencies=[Depends(get_current_customer)],
+    dependencies=[
+        Depends(get_current_customer),
+        Depends(http_bearer),  # optional to see a form for token in swagger
+    ],
 )
 
 
