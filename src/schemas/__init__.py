@@ -35,10 +35,5 @@ from .customers import (
 from .cars import CarCreate, CarUpdate, Car, CarImageCreate, CarImageUpdate, CarImagesDelete, CarImage
 from .categories import CategoryCreate, CategoryUpdate, Category, PaginatedCategoryResponse
 
-
-from .cars import Car
-from .categories import Category
-
-# 🔥 ВАЖНО
 Car.model_rebuild()
 Category.model_rebuild()
