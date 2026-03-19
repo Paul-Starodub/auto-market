@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordBearer, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.config import settings
 from src.database import get_db
 from src.security.dependencies import get_jwt_auth_manager
 from src.security.token_manager import JWTAuthManager
@@ -12,7 +13,7 @@ from src.security.token_manager import JWTAuthManager
 if TYPE_CHECKING:
     from src import database
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/customers/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api.prefix}/customers/login")
 http_bearer = HTTPBearer(auto_error=False)  # optional to see a form for token in swagger
 
 

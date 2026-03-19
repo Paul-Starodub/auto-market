@@ -6,6 +6,6 @@ from .customers import router as customers_router
 
 src_router = APIRouter()
 
-src_router.include_router(customers_router, prefix="/customers", tags=["customers"])
-src_router.include_router(cars_router, prefix="/cars", tags=["cars"])
-src_router.include_router(categories_router, prefix="/categories", tags=["categories"])
+src_router.include_router(customers_router)
+src_router.include_router(cars_router)
+src_router.include_router(categories_router)
