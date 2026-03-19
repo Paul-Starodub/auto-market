@@ -15,16 +15,23 @@ class APIPrefix(BaseModel):
     prefix: str = "/api"
 
 
+class DatabaseConfig(BaseModel):
+    HOST: str
+    PORT: int
+    NAME: str
+    USER: str
+    PASSWORD: str
+    ECHO: bool
+
+    @property
+    def DATABASE_URL(self) -> str:
+        return f"postgresql+asyncpg://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.NAME}"
+
+
 class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: APIPrefix = APIPrefix()
-
-    DB_HOST: str
-    DB_PORT: int
-    DB_NAME: str
-    DB_USER: str
-    DB_PASSWORD: str
-    ECHO: bool
+    db: DatabaseConfig
 
     SECRET_KEY_ACCESS: str
     SECRET_KEY_REFRESH: str
@@ -35,11 +42,10 @@ class Settings(BaseSettings):
     max_upload_size_bytes: int = 5 * 1024 * 1024
     entities_per_page: int = 10
 
-    @property
-    def DATABASE_URL(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
-    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env")
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / ".env",
+        env_nested_delimiter="__",
+    )
 
 
 settings = Settings()
