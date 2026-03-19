@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     entities_per_page: int = 10
 
     model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env",
+        env_file=(BASE_DIR / ".env.template", BASE_DIR / ".env"),
         env_nested_delimiter="__",
         case_sensitive=False,
     )
