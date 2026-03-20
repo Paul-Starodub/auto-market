@@ -1,7 +1,10 @@
 from datetime import datetime, UTC
+
+from fastapi import BackgroundTasks
 from sqlalchemy import select, func, delete, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mailing.send_welcome_email import send_welcome_email
 from src import database
 from src.schemas import CustomerCreate, CustomerUpdate
 from src.security.passwords import hash_password
@@ -20,7 +23,7 @@ async def get_customer_by_email(db: AsyncSession, email: str):
     return result.scalars().first()
 
 
-async def create_customer(db: AsyncSession, customer: CustomerCreate):
+async def create_customer(db: AsyncSession, customer: CustomerCreate, background_tasks: BackgroundTasks):
     new_customer = database.Customer(
         username=customer.username,
         email=customer.email.lower(),
@@ -29,6 +32,7 @@ async def create_customer(db: AsyncSession, customer: CustomerCreate):
     db.add(new_customer)
     await db.commit()
     await db.refresh(new_customer)
+    background_tasks.add_task(send_welcome_email, new_customer)
     return new_customer
 
 

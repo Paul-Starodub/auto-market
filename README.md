@@ -6,6 +6,7 @@ A modern RESTful API system for managing an automotive marketplace. Built with F
 
 - **Asynchronous Architecture** - leveraging SQLAlchemy async and FastAPI for maximum performance
 - **JWT Authentication** - secured endpoints with access/refresh token system
+- **Email Notifications** - welcome emails for new users with background tasks
 - **Image Management** - upload, processing, and optimization of car and profile images
 - **Category System** - organize cars by categories with pagination support
 - **User Profiles** - extended profile system with bio and avatars
@@ -18,6 +19,8 @@ A modern RESTful API system for managing an automotive marketplace. Built with F
 - **Database**: PostgreSQL 18.1
 - **ORM**: SQLAlchemy 2.0 (async)
 - **Authentication**: JWT (python-jose)
+- **Email**: aiosmtplib (async SMTP)
+- **Email Testing**: MailDev (development SMTP server)
 - **Image Processing**: Pillow
 - **Validation**: Pydantic 2.0
 - **Migrations**: Alembic
@@ -67,6 +70,14 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 # Application
 MAX_UPLOAD_SIZE_BYTES=5242880
 ENTITIES_PER_PAGE=10
+
+# Email settings (for MailDev in development)
+EMAIL__HOST=localhost
+EMAIL__PORT=1025
+EMAIL__HOST_USER=
+EMAIL__HOST_PASSWORD=
+EMAIL__USE_TLS=False
+EMAIL__FROM_EMAIL=noreply@automarket.com
 ```
 
 > **⚠️ Important**: Use strong random strings for SECRET_KEY_ACCESS and SECRET_KEY_REFRESH in production
@@ -74,7 +85,7 @@ ENTITIES_PER_PAGE=10
 ### 3. Run with Docker
 
 ```bash
-# Start PostgreSQL
+# Start PostgreSQL and MailDev
 docker-compose up -d
 
 # Install dependencies with Poetry
@@ -95,6 +106,8 @@ The API will be available at: **http://localhost:8000**
 Swagger documentation: **http://localhost:8000/docs**
 
 ReDoc documentation: **http://localhost:8000/redoc**
+
+**Email Testing (MailDev)**: **http://localhost:8080** - View all emails sent during development
 
 ### 4. Stop Services
 
@@ -290,6 +303,31 @@ curl -X POST "http://localhost:8000/api/categories/" \
 - **Upload Restrictions**: Maximum file size - 5 MB
 - **Automatic Cleanup**: Old refresh tokens are automatically removed
 
+## 📧 Email System
+
+The application sends welcome emails to new users using FastAPI's BackgroundTasks and aiosmtplib for async email delivery.
+
+### Email Configuration
+
+Email settings are configured via environment variables (see `.env` file). In development, emails are captured by **MailDev** - a lightweight SMTP server with a web UI.
+
+**Access MailDev UI**: http://localhost:8080
+
+### How it Works
+
+1. User registers via `POST /api/customers/`
+2. Customer record is created in the database
+3. Background task is triggered to send welcome email
+4. Email is sent asynchronously without blocking the response
+5. MailDev captures the email for testing/debugging
+
+### Email Features
+
+- **Async sending** - Non-blocking email delivery using aiosmtplib
+- **Background tasks** - Emails sent in background, doesn't slow down API responses
+- **Development testing** - MailDev provides web UI to view all sent emails
+- **Configurable** - Easy to switch to real SMTP server for production
+
 ## 🛠️ Development
 
 ### Database Migrations
@@ -316,6 +354,9 @@ auto-market/
 │   ├── versions/               # Migration scripts
 │   ├── env.py                  # Alembic environment config
 │   └── script.py.mako          # Migration template
+├── mailing/                    # Email functionality
+│   ├── send_email.py           # Core async email sending
+│   └── send_welcome_email.py  # Welcome email template
 ├── src/
 │   ├── core/                   # Core application configuration
 │   │   └── config.py           # Settings and environment variables

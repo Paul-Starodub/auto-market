@@ -6,6 +6,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).parent.parent.parent
 
 
+class EmailConfig(BaseModel):
+    HOST: str = "localhost"
+    PORT: int = 1025
+    HOST_USER: str = ""
+    HOST_PASSWORD: str = ""
+    USE_TLS: bool = False
+    FROM_EMAIL: str = "noreply@automarket.com"
+
+
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
     port: int = 8000
@@ -32,6 +41,7 @@ class Settings(BaseSettings):
     run: RunConfig = RunConfig()
     api: APIPrefix = APIPrefix()
     db: DatabaseConfig
+    email: EmailConfig = EmailConfig()
 
     SECRET_KEY_ACCESS: str
     SECRET_KEY_REFRESH: str

@@ -2,7 +2,7 @@ from datetime import datetime, UTC
 from typing import Annotated
 
 from PIL import UnidentifiedImageError
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,14 +32,18 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 
 
 @router.post("/", response_model=CustomerPrivate, status_code=status.HTTP_201_CREATED)
-async def create_customer(customer: CustomerCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def create_customer(
+    customer: CustomerCreate,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     existing_customer = await customers_crud.get_customer_by_username(db=db, username=customer.username)
     if existing_customer:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
     existing_email = await customers_crud.get_customer_by_email(db=db, email=customer.email)
     if existing_email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
-    return await customers_crud.create_customer(db=db, customer=customer)
+    return await customers_crud.create_customer(db=db, customer=customer, background_tasks=background_tasks)
 
 
 @router.post("/login/", response_model=Token)
