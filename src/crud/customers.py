@@ -4,8 +4,8 @@ from fastapi import BackgroundTasks
 from sqlalchemy import select, func, delete, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mailing.send_welcome_email import send_welcome_email
 from src import database
+from src.mailing.send_welcome_email import send_welcome_email
 from src.schemas import CustomerCreate, CustomerUpdate
 from src.security.passwords import hash_password
 from src.services.image_utils import delete_image
