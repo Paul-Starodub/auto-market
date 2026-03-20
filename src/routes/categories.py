@@ -14,7 +14,7 @@ router = APIRouter(
     tags=["categories"],
     dependencies=[
         Depends(get_current_customer),
-        Depends(http_bearer),  # optional to see a form for token in swagger
+        Depends(http_bearer),  # optional case to see a form for token in swagger
     ],
 )
 
@@ -52,13 +52,11 @@ async def create_category(
 
 @router.put("/{category_id}/", response_model=Category)
 async def update_category(
-    db: Annotated[AsyncSession, Depends(get_db)],
-    category_id: int,
-    category_update: CategoryUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)], category_id: int, category_update: CategoryUpdate
 ):
     return await categories_crud.update_category(db=db, category_id=category_id, category_update=category_update)
 
 
 @router.delete("/{category_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
-    await categories_crud.delete_category(db, category_id)
+    await categories_crud.delete_category(db=db, category_id=category_id)
