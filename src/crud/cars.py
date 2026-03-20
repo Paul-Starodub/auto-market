@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src import database
-from src.schemas import CarCreate, CarUpdate
+from src.schemas import CarCreateSchema, CarUpdateSchema
 
 
 async def get_car_by_id(db: AsyncSession, car_id: int):
@@ -33,7 +33,7 @@ async def list_cars(db: AsyncSession, skip: int, limit: int):
     return result.unique().scalars().all()
 
 
-async def create_car(db: AsyncSession, car_create: CarCreate):
+async def create_car(db: AsyncSession, car_create: CarCreateSchema):
     new_car = database.Car(**car_create.model_dump())
     db.add(new_car)
     await db.commit()
@@ -53,7 +53,7 @@ async def get_car_images_by_car_id(db: AsyncSession, car_id: int):
     return result.scalars().all()
 
 
-async def update_car(db: AsyncSession, car_id: int, car_update: CarUpdate):
+async def update_car(db: AsyncSession, car_id: int, car_update: CarUpdateSchema):
     car = await get_car_by_id(db, car_id)
     if not car:
         return None

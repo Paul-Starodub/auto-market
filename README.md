@@ -155,7 +155,7 @@ docker-compose down -v
 | PATCH | `/cars/{car_id}/` | Update car information | ✅ |
 | DELETE | `/cars/{car_id}/` | Delete car | ✅ |
 
-### 📸 Car Images (`/api/cars`)
+### 📸 CarSchema Images (`/api/cars`)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -257,8 +257,8 @@ curl -X POST "http://localhost:8000/api/categories/" \
 
 **Cars** (Vehicles)
 - `id` - Primary key
-- `brand` - Car brand
-- `model` - Car model
+- `brand` - CarSchema brand
+- `model` - CarSchema model
 - `car_type` - Type (PASSENGER, MOTO, TRUCK)
 - `fuel_type` - Fuel type (PETROL, DIESEL, ELECTRIC, GAS, HYBRID)
 - `transmission_type` - Transmission (MANUAL, AUTOMATIC, TIPTRONIC, ROBOT, CVT, REDUCER)
@@ -278,7 +278,7 @@ curl -X POST "http://localhost:8000/api/categories/" \
 - `last_name` - Last name
 - `bio` - Biography
 
-**CarImages** (Car Images)
+**CarImages** (CarSchema Images)
 - `id` - Primary key
 - `file_path` - File path
 - `car_id` - FK to car
@@ -289,7 +289,7 @@ curl -X POST "http://localhost:8000/api/categories/" \
 - `expires_at` - Expiration timestamp
 - `customer_id` - FK to customer
 
-**CustomerCar** (Customer-Car Relationship)
+**CustomerCar** (Customer-CarSchema Relationship)
 - `customer_id` - FK to customer
 - `car_id` - FK to car
 - `offer` - Offered price
@@ -361,13 +361,13 @@ auto-market/
 │   ├── core/                   # Core application configuration
 │   │   └── config.py           # Settings and environment variables
 │   ├── crud/                   # CRUD operations
-│   │   ├── cars.py             # Car operations
+│   │   ├── cars.py             # CarSchema operations
 │   │   ├── categories.py       # Category operations
 │   │   └── customers.py        # Customer operations
 │   ├── database/               # Database layer
 │   │   ├── models/             # SQLAlchemy ORM models
 │   │   │   ├── base.py         # Base model class
-│   │   │   ├── cars.py         # Car, Category, CarImage models
+│   │   │   ├── cars.py         # CarSchema, Category, CarImageSchema models
 │   │   │   └── customers.py    # Customer, Profile, RefreshToken models
 │   │   ├── validators/         # Custom validators
 │   │   │   └── customers.py    # Customer field validators
@@ -375,11 +375,11 @@ auto-market/
 │   │   ├── engine.py           # Database engine configuration
 │   │   └── mixins.py           # Model mixins
 │   ├── routes/                 # API endpoints (controllers)
-│   │   ├── cars.py             # Car endpoints
+│   │   ├── cars.py             # CarSchema endpoints
 │   │   ├── categories.py       # Category endpoints
 │   │   └── customers.py        # Customer/auth endpoints
 │   ├── schemas/                # Pydantic models (DTOs)
-│   │   ├── cars.py             # Car schemas
+│   │   ├── cars.py             # CarSchema schemas
 │   │   ├── categories.py       # Category schemas
 │   │   └── customers.py        # Customer schemas
 │   ├── security/               # Authentication & authorization
