@@ -8,8 +8,8 @@ from starlette.concurrency import run_in_threadpool
 from src.core.config import settings
 from src.crud import cars_crud
 from src.database import get_db
-from src.schemas import Car, CarCreate, CarUpdate, CarImage, CarImagesDelete, CarFull
-from src.schemas.cars import PaginatedCarResponse
+from src.schemas import CarSchema, CarCreateSchema, CarUpdateSchema, CarImageSchema, CarImagesDeleteSchema, CarFullSchema
+from src.schemas.cars import PaginatedCarResponseSchema
 from src.security.auth import get_current_customer
 from src.services.image_utils import process_image
 
@@ -18,7 +18,7 @@ MAX_FILE_SIZE = settings.max_upload_size_bytes
 router = APIRouter(prefix="/cars", tags=["cars"], dependencies=[Depends(get_current_customer)])
 
 
-@router.get("/", response_model=PaginatedCarResponse)
+@router.get("/", response_model=PaginatedCarResponseSchema)
 async def list_cars(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -27,8 +27,8 @@ async def list_cars(
     total = await cars_crud.get_cars_count(db=db)
     cars = await cars_crud.list_cars(db=db, skip=skip, limit=limit)
     has_more = skip + len(cars) < total
-    return PaginatedCarResponse(
-        cars=[Car.model_validate(car) for car in cars],
+    return PaginatedCarResponseSchema(
+        cars=[CarSchema.model_validate(car) for car in cars],
         total=total,
         skip=skip,
         limit=limit,
@@ -36,7 +36,7 @@ async def list_cars(
     )
 
 
-@router.get("/{car_id}/", response_model=CarFull)
+@router.get("/{car_id}/", response_model=CarFullSchema)
 async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     car = await cars_crud.get_car_by_id(db=db, car_id=car_id)
     if not car:
@@ -44,15 +44,15 @@ async def get_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     return car
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=CarFull)
-async def create_car(car_create: CarCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=CarFullSchema)
+async def create_car(car_create: CarCreateSchema, db: Annotated[AsyncSession, Depends(get_db)]):
     return await cars_crud.create_car(db=db, car_create=car_create)
 
 
-@router.patch("/{car_id}/", response_model=CarFull)
+@router.patch("/{car_id}/", response_model=CarFullSchema)
 async def update_car(
     car_id: int,
-    car_update: CarUpdate,
+    car_update: CarUpdateSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     updated_car = await cars_crud.update_car(db=db, car_id=car_id, car_update=car_update)
@@ -61,7 +61,7 @@ async def update_car(
     return updated_car
 
 
-@router.post("/{car_id}/images/", response_model=list[CarImage])
+@router.post("/{car_id}/images/", response_model=list[CarImageSchema])
 async def upload_car_images(
     car_id: int,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -92,7 +92,7 @@ async def upload_car_images(
     return images
 
 
-@router.get("/{car_id}/images/", response_model=list[CarImage])
+@router.get("/{car_id}/images/", response_model=list[CarImageSchema])
 async def list_car_images(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     images = await cars_crud.get_car_images_by_car_id(db=db, car_id=car_id)
     return images
@@ -106,7 +106,7 @@ async def delete_car(car_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @router.delete("/{car_id}/images/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_car_images(car_id: int, payload: CarImagesDelete, db: Annotated[AsyncSession, Depends(get_db)]):
+async def delete_car_images(car_id: int, payload: CarImagesDeleteSchema, db: Annotated[AsyncSession, Depends(get_db)]):
     deleted_count = await cars_crud.delete_car_images(db=db, image_ids=payload.image_ids, car_id=car_id)
     if deleted_count == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No images found to delete")

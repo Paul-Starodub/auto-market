@@ -8,7 +8,7 @@ A modern RESTful API system for managing an automotive marketplace. Built with F
 - **JWT Authentication** - secured endpoints with access/refresh token system
 - **Email Notifications** - welcome emails for new users with background tasks
 - **Image Management** - upload, processing, and optimization of car and profile images
-- **Category System** - organize cars by categories with pagination support
+- **CategorySchema System** - organize cars by categories with pagination support
 - **User Profiles** - extended profile system with bio and avatars
 - **Data Validation** - strict validation through Pydantic schemas
 - **Database Migrations** - database schema management via Alembic
@@ -63,7 +63,7 @@ SECRET_KEY_ACCESS=your_access_secret_key_here_min_32_chars
 SECRET_KEY_REFRESH=your_refresh_secret_key_here_min_32_chars
 JWT_SIGNING_ALGORITHM=HS256
 
-# Token expiration
+# TokenSchema expiration
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
@@ -127,14 +127,14 @@ docker-compose down -v
 |--------|----------|-------------|------|
 | POST | `/customers/` | Register a new user | ❌ |
 | POST | `/customers/login/` | Login (get tokens) | ❌ |
-| POST | `/customers/refresh/` | Refresh access token | ❌ |
+| POST | `/customers/refresh/` | RefreshSchema access token | ❌ |
 | POST | `/customers/logout/` | Logout (revoke refresh token) | ✅ |
 | GET | `/customers/me/` | Get current user data | ✅ |
 | GET | `/customers/{customer_id}/` | Get public user data | ✅ |
 | PATCH | `/customers/{customer_id}/` | Update user data | ✅ |
 | DELETE | `/customers/{customer_id}/` | Delete account | ✅ |
 
-### 🖼️ Profile & Images (`/api/customers`)
+### 🖼️ ProfileSchema & Images (`/api/customers`)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -155,7 +155,7 @@ docker-compose down -v
 | PATCH | `/cars/{car_id}/` | Update car information | ✅ |
 | DELETE | `/cars/{car_id}/` | Delete car | ✅ |
 
-### 📸 Car Images (`/api/cars`)
+### 📸 CarSchema Images (`/api/cars`)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -257,8 +257,8 @@ curl -X POST "http://localhost:8000/api/categories/" \
 
 **Cars** (Vehicles)
 - `id` - Primary key
-- `brand` - Car brand
-- `model` - Car model
+- `brand` - CarSchema brand
+- `model` - CarSchema model
 - `car_type` - Type (PASSENGER, MOTO, TRUCK)
 - `fuel_type` - Fuel type (PETROL, DIESEL, ELECTRIC, GAS, HYBRID)
 - `transmission_type` - Transmission (MANUAL, AUTOMATIC, TIPTRONIC, ROBOT, CVT, REDUCER)
@@ -278,18 +278,18 @@ curl -X POST "http://localhost:8000/api/categories/" \
 - `last_name` - Last name
 - `bio` - Biography
 
-**CarImages** (Car Images)
+**CarImages** (CarSchema Images)
 - `id` - Primary key
 - `file_path` - File path
 - `car_id` - FK to car
 
-**RefreshTokens** (Refresh Tokens)
+**RefreshTokens** (RefreshSchema Tokens)
 - `id` - Primary key
 - `token` - Unique token
 - `expires_at` - Expiration timestamp
 - `customer_id` - FK to customer
 
-**CustomerCar** (Customer-Car Relationship)
+**CustomerCar** (Customer-CarSchema Relationship)
 - `customer_id` - FK to customer
 - `car_id` - FK to car
 - `offer` - Offered price
@@ -361,26 +361,26 @@ auto-market/
 │   ├── core/                   # Core application configuration
 │   │   └── config.py           # Settings and environment variables
 │   ├── crud/                   # CRUD operations
-│   │   ├── cars.py             # Car operations
-│   │   ├── categories.py       # Category operations
+│   │   ├── cars.py             # CarSchema operations
+│   │   ├── categories.py       # CategorySchema operations
 │   │   └── customers.py        # Customer operations
 │   ├── database/               # Database layer
 │   │   ├── models/             # SQLAlchemy ORM models
 │   │   │   ├── base.py         # Base model class
-│   │   │   ├── cars.py         # Car, Category, CarImage models
-│   │   │   └── customers.py    # Customer, Profile, RefreshToken models
+│   │   │   ├── cars.py         # CarSchema, CategorySchema, CarImageSchema models
+│   │   │   └── customers.py    # Customer, ProfileSchema, RefreshToken models
 │   │   ├── validators/         # Custom validators
 │   │   │   └── customers.py    # Customer field validators
 │   │   ├── dependencies.py     # Database dependencies
 │   │   ├── engine.py           # Database engine configuration
 │   │   └── mixins.py           # Model mixins
 │   ├── routes/                 # API endpoints (controllers)
-│   │   ├── cars.py             # Car endpoints
-│   │   ├── categories.py       # Category endpoints
+│   │   ├── cars.py             # CarSchema endpoints
+│   │   ├── categories.py       # CategorySchema endpoints
 │   │   └── customers.py        # Customer/auth endpoints
 │   ├── schemas/                # Pydantic models (DTOs)
-│   │   ├── cars.py             # Car schemas
-│   │   ├── categories.py       # Category schemas
+│   │   ├── cars.py             # CarSchema schemas
+│   │   ├── categories.py       # CategorySchema schemas
 │   │   └── customers.py        # Customer schemas
 │   ├── security/               # Authentication & authorization
 │   │   ├── auth.py             # Auth dependencies

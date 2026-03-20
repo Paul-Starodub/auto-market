@@ -1360,7 +1360,7 @@ windows-terminal = ["colorama (>=0.4.6)"]
 [[package]]
 name = "pyjwt"
 version = "2.12.1"
-description = "JSON Web Token implementation in Python"
+description = "JSON Web TokenSchema implementation in Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]

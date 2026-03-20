@@ -3,22 +3,22 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from src.database.validators.customers import validate_password_strength
 
 
-class Token(BaseModel):
+class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
 
 
-class Refresh(BaseModel):
+class RefreshSchema(BaseModel):
     refresh_token: str
 
 
-class CustomerBase(BaseModel):
+class CustomerBaseSchema(BaseModel):
     username: str = Field(min_length=1, max_length=50)
     email: EmailStr = Field(max_length=120)
 
 
-class CustomerCreate(CustomerBase):
+class CustomerCreateSchema(CustomerBaseSchema):
     password: str = Field(min_length=8)
 
     @field_validator("password")
@@ -27,7 +27,7 @@ class CustomerCreate(CustomerBase):
         return validate_password_strength(value)
 
 
-class CustomerPublic(BaseModel):
+class CustomerPublicSchema(BaseModel):
     id: int
     username: str
     image_file: str | None
@@ -36,30 +36,30 @@ class CustomerPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CustomerPrivate(CustomerPublic):
+class CustomerPrivateSchema(CustomerPublicSchema):
     email: EmailStr
 
 
-class CustomerUpdate(BaseModel):
+class CustomerUpdateSchema(BaseModel):
     username: str | None = Field(default=None, min_length=1, max_length=50)
     email: EmailStr | None = Field(default=None, max_length=120)
 
 
-class ProfileBase(BaseModel):
+class ProfileBaseSchema(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     bio: str | None = None
 
 
-class ProfileCreate(ProfileBase):
+class ProfileCreateSchema(ProfileBaseSchema):
     pass
 
 
-class ProfileUpdate(ProfileBase):
+class ProfileUpdateSchema(ProfileBaseSchema):
     pass
 
 
-class Profile(ProfileBase):
+class ProfileSchema(ProfileBaseSchema):
     id: int
     customer_id: int
 

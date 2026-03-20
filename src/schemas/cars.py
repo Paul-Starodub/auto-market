@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
 from src.database.validators.cars import current_year
-from src.schemas.categories import PaginatedBaseResponse
+from src.schemas.categories import PaginatedBaseResponseSchema
 
 
 class YearsValidationMixin(BaseModel):
@@ -16,14 +16,14 @@ class YearsValidationMixin(BaseModel):
         return self
 
 
-class CarCategory(BaseModel):
+class CarCategorySchema(BaseModel):
     id: int
     name: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class CarBase(YearsValidationMixin, BaseModel):
+class CarBaseSchema(YearsValidationMixin, BaseModel):
     brand: str = Field(..., min_length=1, max_length=30)
     model: str = Field(..., min_length=1, max_length=50)
     car_type: CarTypeEnum | None = None
@@ -35,11 +35,11 @@ class CarBase(YearsValidationMixin, BaseModel):
     category_id: int | None = Field(default=None, gt=0, description="Category ID")
 
 
-class CarCreate(CarBase):
+class CarCreateSchema(CarBaseSchema):
     pass
 
 
-class CarUpdate(YearsValidationMixin, BaseModel):
+class CarUpdateSchema(YearsValidationMixin, BaseModel):
     brand: str | None = None
     model: str | None = None
     car_type: CarTypeEnum | None = None
@@ -51,7 +51,7 @@ class CarUpdate(YearsValidationMixin, BaseModel):
     category_id: int | None = None
 
 
-class Car(BaseModel):
+class CarSchema(BaseModel):
     id: int
     brand: str = Field(..., min_length=1, max_length=30)
     model: str = Field(..., min_length=1, max_length=50)
@@ -65,33 +65,33 @@ class Car(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CarFull(Car):
-    category: CarCategory | None = None
+class CarFullSchema(CarSchema):
+    category: CarCategorySchema | None = None
 
 
-class CarImageBase(BaseModel):
+class CarImageBaseSchema(BaseModel):
     file_path: str = Field(..., min_length=1, max_length=255)
     car_id: int
 
 
-class CarImageCreate(CarImageBase):
+class CarImageCreateSchema(CarImageBaseSchema):
     pass
 
 
-class CarImageUpdate(CarImageCreate):
+class CarImageUpdateSchema(CarImageCreateSchema):
     pass
 
 
-class CarImage(BaseModel):
+class CarImageSchema(BaseModel):
     id: int
     file_path: str = Field(..., min_length=1, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class CarImagesDelete(BaseModel):
+class CarImagesDeleteSchema(BaseModel):
     image_ids: list[int]
 
 
-class PaginatedCarResponse(PaginatedBaseResponse):
-    cars: list[Car]
+class PaginatedCarResponseSchema(PaginatedBaseResponseSchema):
+    cars: list[CarSchema]

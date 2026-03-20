@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.config import settings
 from src.database import get_db
 from src.crud import categories_crud
-from src.schemas import PaginatedCategoryResponse, Category, CategoryCreate, CategoryUpdate
+from src.schemas import PaginatedCategoryResponseSchema, CategorySchema, CategoryCreateSchema, CategoryUpdateSchema
 from src.security.auth import get_current_customer, http_bearer
 
 router = APIRouter(
@@ -19,7 +19,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=PaginatedCategoryResponse)
+@router.get("/", response_model=PaginatedCategoryResponseSchema)
 async def get_categories(
     db: Annotated[AsyncSession, Depends(get_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -28,8 +28,8 @@ async def get_categories(
     total = await categories_crud.get_categories_count(db)
     categories = await categories_crud.get_categories(db=db, skip=skip, limit=limit)
     has_more = skip + len(categories) < total
-    return PaginatedCategoryResponse(
-        categories=[Category.model_validate(cat) for cat in categories],
+    return PaginatedCategoryResponseSchema(
+        categories=[CategorySchema.model_validate(cat) for cat in categories],
         total=total,
         skip=skip,
         limit=limit,
@@ -37,22 +37,22 @@ async def get_categories(
     )
 
 
-@router.get("/{category_id}/", response_model=Category)
+@router.get("/{category_id}/", response_model=CategorySchema)
 async def get_category(db: Annotated[AsyncSession, Depends(get_db)], category_id: int):
     return await categories_crud.get_category(db=db, category_id=category_id)
 
 
-@router.post("/", response_model=Category, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CategorySchema, status_code=status.HTTP_201_CREATED)
 async def create_category(
     db: Annotated[AsyncSession, Depends(get_db)],
-    category_create: CategoryCreate,
+    category_create: CategoryCreateSchema,
 ):
     return await categories_crud.create_category(db=db, category_create=category_create)
 
 
-@router.put("/{category_id}/", response_model=Category)
+@router.put("/{category_id}/", response_model=CategorySchema)
 async def update_category(
-    db: Annotated[AsyncSession, Depends(get_db)], category_id: int, category_update: CategoryUpdate
+    db: Annotated[AsyncSession, Depends(get_db)], category_id: int, category_update: CategoryUpdateSchema
 ):
     return await categories_crud.update_category(db=db, category_id=category_id, category_update=category_update)
 
