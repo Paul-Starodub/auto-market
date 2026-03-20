@@ -76,7 +76,7 @@ class Car(Base):
     images: Mapped[list["CarImage"]] = relationship(back_populates="car", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
-        return f"Car(brand={self.brand}, model={self.model}, car_type={self.car_type}, fuel_type={self.fuel_type}, transmission_type={self.transmission_type}, start_year={self.start_year}, end_year={self.end_year}, costs={self.costs})"
+        return f"Car(brand={self.brand}, model={self.model}, car_type={self.car_type}, fuel_type={self.fuel_type}, transmission_type={self.transmission_type}, start_year={self.start_year}, end_year={self.end_year}, cost={self.cost})"
 
 
 class CarImage(Base):
