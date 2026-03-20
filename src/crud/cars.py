@@ -25,6 +25,7 @@ async def get_cars_count(db: AsyncSession) -> int:
 async def list_cars(db: AsyncSession, skip: int, limit: int):
     result = await db.execute(
         select(database.Car)
+        .order_by(database.Car.id.desc())
         .options(joinedload(database.Car.images), joinedload(database.Car.category))
         .offset(skip)
         .limit(limit)
