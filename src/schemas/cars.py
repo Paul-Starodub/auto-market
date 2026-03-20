@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, model_validator, Field
 
 from src.database.models.cars import CarTypeEnum, FuelTypeEnum, TransmissionTypeEnum
 from src.database.validators.cars import current_year
-from src.schemas.categories import PaginatedBaseResponse
+from src.schemas.categories import PaginatedBaseResponseSchema
 
 
 class YearsValidationMixin(BaseModel):
@@ -93,5 +93,5 @@ class CarImagesDeleteSchema(BaseModel):
     image_ids: list[int]
 
 
-class PaginatedCarResponseSchema(PaginatedBaseResponse):
+class PaginatedCarResponseSchema(PaginatedBaseResponseSchema):
     cars: list[CarSchema]

@@ -8,7 +8,7 @@ A modern RESTful API system for managing an automotive marketplace. Built with F
 - **JWT Authentication** - secured endpoints with access/refresh token system
 - **Email Notifications** - welcome emails for new users with background tasks
 - **Image Management** - upload, processing, and optimization of car and profile images
-- **Category System** - organize cars by categories with pagination support
+- **CategorySchema System** - organize cars by categories with pagination support
 - **User Profiles** - extended profile system with bio and avatars
 - **Data Validation** - strict validation through Pydantic schemas
 - **Database Migrations** - database schema management via Alembic
@@ -362,12 +362,12 @@ auto-market/
 │   │   └── config.py           # Settings and environment variables
 │   ├── crud/                   # CRUD operations
 │   │   ├── cars.py             # CarSchema operations
-│   │   ├── categories.py       # Category operations
+│   │   ├── categories.py       # CategorySchema operations
 │   │   └── customers.py        # Customer operations
 │   ├── database/               # Database layer
 │   │   ├── models/             # SQLAlchemy ORM models
 │   │   │   ├── base.py         # Base model class
-│   │   │   ├── cars.py         # CarSchema, Category, CarImageSchema models
+│   │   │   ├── cars.py         # CarSchema, CategorySchema, CarImageSchema models
 │   │   │   └── customers.py    # Customer, Profile, RefreshToken models
 │   │   ├── validators/         # Custom validators
 │   │   │   └── customers.py    # Customer field validators
@@ -376,11 +376,11 @@ auto-market/
 │   │   └── mixins.py           # Model mixins
 │   ├── routes/                 # API endpoints (controllers)
 │   │   ├── cars.py             # CarSchema endpoints
-│   │   ├── categories.py       # Category endpoints
+│   │   ├── categories.py       # CategorySchema endpoints
 │   │   └── customers.py        # Customer/auth endpoints
 │   ├── schemas/                # Pydantic models (DTOs)
 │   │   ├── cars.py             # CarSchema schemas
-│   │   ├── categories.py       # Category schemas
+│   │   ├── categories.py       # CategorySchema schemas
 │   │   └── customers.py        # Customer schemas
 │   ├── security/               # Authentication & authorization
 │   │   ├── auth.py             # Auth dependencies

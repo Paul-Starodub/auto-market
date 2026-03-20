@@ -16,10 +16,10 @@ __all__ = (
     "CarImagesDeleteSchema",
     "CarImageSchema",
     "CarCategorySchema",
-    "CategoryCreate",
-    "CategoryUpdate",
-    "Category",
-    "PaginatedCategoryResponse",
+    "CategoryCreateSchema",
+    "CategoryUpdateSchema",
+    "CategorySchema",
+    "PaginatedCategoryResponseSchema",
     "CarFullSchema",
 )
 
@@ -45,4 +45,4 @@ from .cars import (
     CarCategorySchema,
     CarFullSchema,
 )
-from .categories import CategoryCreate, CategoryUpdate, Category, PaginatedCategoryResponse
+from .categories import CategoryCreateSchema, CategoryUpdateSchema, CategorySchema, PaginatedCategoryResponseSchema
