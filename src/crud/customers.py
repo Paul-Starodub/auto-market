@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import database
 from src.mailing.send_welcome_email import send_welcome_email
-from src.schemas import CustomerCreate, CustomerUpdate
+from src.schemas import CustomerCreateSchema, CustomerUpdateSchema
 from src.security.passwords import hash_password
 from src.services.image_utils import delete_image
 
@@ -23,7 +23,7 @@ async def get_customer_by_email(db: AsyncSession, email: str):
     return result.scalars().first()
 
 
-async def create_customer(db: AsyncSession, customer: CustomerCreate, background_tasks: BackgroundTasks):
+async def create_customer(db: AsyncSession, customer: CustomerCreateSchema, background_tasks: BackgroundTasks):
     new_customer = database.Customer(
         username=customer.username,
         email=customer.email.lower(),
@@ -82,7 +82,7 @@ async def get_customer_by_id(db: AsyncSession, customer_id: int):
     return result.scalars().first()
 
 
-async def update_customer(db: AsyncSession, customer, customer_update: CustomerUpdate):
+async def update_customer(db: AsyncSession, customer, customer_update: CustomerUpdateSchema):
     if customer_update.username is not None:
         customer.username = customer_update.username
     if customer_update.email is not None:

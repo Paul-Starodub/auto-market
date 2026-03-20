@@ -63,7 +63,7 @@ SECRET_KEY_ACCESS=your_access_secret_key_here_min_32_chars
 SECRET_KEY_REFRESH=your_refresh_secret_key_here_min_32_chars
 JWT_SIGNING_ALGORITHM=HS256
 
-# Token expiration
+# TokenSchema expiration
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 REFRESH_TOKEN_EXPIRE_DAYS=7
 
@@ -127,14 +127,14 @@ docker-compose down -v
 |--------|----------|-------------|------|
 | POST | `/customers/` | Register a new user | ❌ |
 | POST | `/customers/login/` | Login (get tokens) | ❌ |
-| POST | `/customers/refresh/` | Refresh access token | ❌ |
+| POST | `/customers/refresh/` | RefreshSchema access token | ❌ |
 | POST | `/customers/logout/` | Logout (revoke refresh token) | ✅ |
 | GET | `/customers/me/` | Get current user data | ✅ |
 | GET | `/customers/{customer_id}/` | Get public user data | ✅ |
 | PATCH | `/customers/{customer_id}/` | Update user data | ✅ |
 | DELETE | `/customers/{customer_id}/` | Delete account | ✅ |
 
-### 🖼️ Profile & Images (`/api/customers`)
+### 🖼️ ProfileSchema & Images (`/api/customers`)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -283,7 +283,7 @@ curl -X POST "http://localhost:8000/api/categories/" \
 - `file_path` - File path
 - `car_id` - FK to car
 
-**RefreshTokens** (Refresh Tokens)
+**RefreshTokens** (RefreshSchema Tokens)
 - `id` - Primary key
 - `token` - Unique token
 - `expires_at` - Expiration timestamp
@@ -368,7 +368,7 @@ auto-market/
 │   │   ├── models/             # SQLAlchemy ORM models
 │   │   │   ├── base.py         # Base model class
 │   │   │   ├── cars.py         # CarSchema, CategorySchema, CarImageSchema models
-│   │   │   └── customers.py    # Customer, Profile, RefreshToken models
+│   │   │   └── customers.py    # Customer, ProfileSchema, RefreshToken models
 │   │   ├── validators/         # Custom validators
 │   │   │   └── customers.py    # Customer field validators
 │   │   ├── dependencies.py     # Database dependencies

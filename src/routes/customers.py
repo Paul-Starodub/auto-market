@@ -12,15 +12,15 @@ from src.core.config import settings
 from src.crud import customers_crud
 from src.database import get_db
 from src.schemas import (
-    CustomerPrivate,
-    CustomerCreate,
-    Token,
-    CustomerPublic,
-    CustomerUpdate,
-    Refresh,
-    Profile,
-    ProfileCreate,
-    ProfileUpdate,
+    CustomerPrivateSchema,
+    CustomerCreateSchema,
+    TokenSchema,
+    CustomerPublicSchema,
+    CustomerUpdateSchema,
+    RefreshSchema,
+    ProfileSchema,
+    ProfileCreateSchema,
+    ProfileUpdateSchema,
 )
 from src.security.auth import CurrentCustomer
 from src.security.dependencies import get_jwt_auth_manager
@@ -31,9 +31,9 @@ from src.services.image_utils import delete_image, process_image
 router = APIRouter(prefix="/customers", tags=["customers"])
 
 
-@router.post("/", response_model=CustomerPrivate, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CustomerPrivateSchema, status_code=status.HTTP_201_CREATED)
 async def create_customer(
-    customer: CustomerCreate,
+    customer: CustomerCreateSchema,
     background_tasks: BackgroundTasks,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -46,7 +46,7 @@ async def create_customer(
     return await customers_crud.create_customer(db=db, customer=customer, background_tasks=background_tasks)
 
 
-@router.post("/login/", response_model=Token)
+@router.post("/login/", response_model=TokenSchema)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -76,12 +76,12 @@ async def login(
             detail="An error occurred while processing the request.",
         )
     jwt_access_token = jwt_manager.create_access_token({"sub": str(customer.id)})
-    return Token(access_token=jwt_access_token, refresh_token=jwt_refresh_token)
+    return TokenSchema(access_token=jwt_access_token, refresh_token=jwt_refresh_token)
 
 
-@router.post("/refresh/", response_model=Token)
+@router.post("/refresh/", response_model=TokenSchema)
 async def refresh_tokens(
-    payload: Refresh,
+    payload: RefreshSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: JWTAuthManager = Depends(get_jwt_auth_manager),
 ):
@@ -107,22 +107,22 @@ async def refresh_tokens(
         token=new_refresh_token,
         days_valid=settings.refresh_token_expire_days,
     )
-    return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
+    return TokenSchema(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 
 @router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(payload: Refresh, current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
+async def logout(payload: RefreshSchema, current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
     db_token = await customers_crud.get_refresh_token(db=db, token=payload.refresh_token)
     if db_token and db_token.customer_id == current_customer.id:
         await customers_crud.delete_refresh_token(db=db, token=payload.refresh_token)
 
 
-@router.get("/me/", response_model=CustomerPrivate)
+@router.get("/me/", response_model=CustomerPrivateSchema)
 async def get_current_customer(current_customer: CurrentCustomer):
     return current_customer
 
 
-@router.get("/{customer_id}/", response_model=CustomerPublic)
+@router.get("/{customer_id}/", response_model=CustomerPublicSchema)
 async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get_db)], _: CurrentCustomer):
     customer = await customers_crud.get_customer_by_id(db=db, customer_id=customer_id)
     if not customer:
@@ -130,10 +130,10 @@ async def get_customer(customer_id: int, db: Annotated[AsyncSession, Depends(get
     return customer
 
 
-@router.patch("/{customer_id}/", response_model=CustomerPrivate)
+@router.patch("/{customer_id}/", response_model=CustomerPrivateSchema)
 async def update_customer(
     customer_id: int,
-    customer_update: CustomerUpdate,
+    customer_update: CustomerUpdateSchema,
     current_customer: CurrentCustomer,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -182,7 +182,7 @@ async def delete_customer(
     await customers_crud.delete_customer(db=db, customer=customer)
 
 
-@router.patch("/{customer_id}/picture/", response_model=CustomerPrivate)
+@router.patch("/{customer_id}/picture/", response_model=CustomerPrivateSchema)
 async def upload_customer_picture(
     customer_id: int,
     file: UploadFile,
@@ -216,7 +216,7 @@ async def upload_customer_picture(
     return current_customer
 
 
-@router.delete("/{customer_id}/picture/", response_model=CustomerPrivate)
+@router.delete("/{customer_id}/picture/", response_model=CustomerPrivateSchema)
 async def delete_customer_picture(
     customer_id: int,
     current_customer: CurrentCustomer,
@@ -240,7 +240,7 @@ async def delete_customer_picture(
     return current_customer
 
 
-@router.get("/me/profile/", response_model=Profile)
+@router.get("/me/profile/", response_model=ProfileSchema)
 async def get_my_profile(current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
     profile = await customers_crud.get_profile_by_customer_id(db=db, customer_id=current_customer.id)
     if not profile:
@@ -248,9 +248,9 @@ async def get_my_profile(current_customer: CurrentCustomer, db: Annotated[AsyncS
     return profile
 
 
-@router.post("/me/profile/", response_model=Profile, status_code=status.HTTP_201_CREATED)
+@router.post("/me/profile/", response_model=ProfileSchema, status_code=status.HTTP_201_CREATED)
 async def create_my_profile(
-    data: ProfileCreate,
+    data: ProfileCreateSchema,
     current_customer: CurrentCustomer,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
@@ -260,9 +260,9 @@ async def create_my_profile(
     return await customers_crud.create_profile(db=db, customer_id=current_customer.id, data=data)
 
 
-@router.patch("/me/profile/", response_model=Profile)
+@router.patch("/me/profile/", response_model=ProfileSchema)
 async def update_my_profile(
-    data: ProfileUpdate,
+    data: ProfileUpdateSchema,
     current_customer: CurrentCustomer,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
