@@ -3,7 +3,7 @@ name = "auto-market"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "Pavlo Starobub",email = "starodub.pavlo@alsodev.md"}
+    {name = "Pavlo Starobub",email = "amorallex@gmail.com"}
 ]
 requires-python = ">=3.12"
 dependencies = [
