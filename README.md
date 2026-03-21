@@ -419,7 +419,7 @@ auto-market/
 
 MIT License
 
-## 👨‍💻 Author
+## 👨‍💻 Starodub Paul
 
 Created to demonstrate FastAPI development skills
 
