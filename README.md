@@ -313,6 +313,13 @@ Email settings are configured via environment variables (see `.env` file). In de
 
 **Access MailDev UI**: http://localhost:8080
 
+
+### Gunicorn Configuration
+
+Gunicorn is used as the production WSGI server. Configuration is set via environment variables.
+
+**Gunicorn Command**: `gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000`
+
 ### How it Works
 
 1. User registers via `POST /api/customers/`
@@ -419,7 +426,7 @@ auto-market/
 
 MIT License
 
-## 👨‍💻 Author
+## 👨‍💻 Starodub Paul
 
 Created to demonstrate FastAPI development skills
 
