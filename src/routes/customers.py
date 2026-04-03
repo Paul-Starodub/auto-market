@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 from typing import Annotated
 
 from PIL import UnidentifiedImageError
@@ -11,6 +11,7 @@ from starlette.concurrency import run_in_threadpool
 from src.core.config import settings
 from src.crud import customers_crud
 from src.database import get_db
+from src.mailing.send_password_reset_email import send_password_reset_email
 from src.schemas import (
     CustomerPrivateSchema,
     CustomerCreateSchema,
@@ -22,10 +23,12 @@ from src.schemas import (
     ProfileCreateSchema,
     ProfileUpdateSchema,
 )
+from src.schemas.customers import ForgotPasswordRequestSchema, ResetPasswordRequestSchema, ChangePasswordRequestSchema
 from src.security.auth import CurrentCustomer
 from src.security.dependencies import get_jwt_auth_manager
-from src.security.passwords import verify_password
+from src.security.passwords import verify_password, hash_password
 from src.security.token_manager import JWTAuthManager
+from src.security.utils import hash_reset_token, generate_secure_token
 from src.services.image_utils import delete_image, process_image
 
 router = APIRouter(prefix="/customers", tags=["customers"])
@@ -111,7 +114,9 @@ async def refresh_tokens(
 
 
 @router.post("/logout/", status_code=status.HTTP_204_NO_CONTENT)
-async def logout(payload: RefreshSchema, current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]):
+async def logout(
+    payload: RefreshSchema, current_customer: CurrentCustomer, db: Annotated[AsyncSession, Depends(get_db)]
+):
     db_token = await customers_crud.get_refresh_token(db=db, token=payload.refresh_token)
     if db_token and db_token.customer_id == current_customer.id:
         await customers_crud.delete_refresh_token(db=db, token=payload.refresh_token)
@@ -120,6 +125,84 @@ async def logout(payload: RefreshSchema, current_customer: CurrentCustomer, db: 
 @router.get("/me/", response_model=CustomerPrivateSchema)
 async def get_current_customer(current_customer: CurrentCustomer):
     return current_customer
+
+
+@router.post("/forgot-password/", status_code=status.HTTP_202_ACCEPTED)
+async def forgot_password(
+    request_data: ForgotPasswordRequestSchema,
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    customer = await customers_crud.get_customer_by_email(db=db, email=request_data.email)
+    if customer:
+        await customers_crud.delete_password_reset_token_by_user(db=db, customer_id=customer.id)
+        token = generate_secure_token()
+        token_hash = hash_reset_token(token)
+        expires_at = datetime.now(UTC) + timedelta(minutes=settings.reset_token_expire_minutes)
+        await customers_crud.create_password_reset_token(
+            db=db, customer_id=customer.id, token_hash=token_hash, expires_at=expires_at
+        )
+        background_tasks.add_task(
+            send_password_reset_email, to_email=customer.email, username=customer.username, token=token
+        )
+    return {"message": "If an account exists with this email, you will receive password reset instructions."}
+
+
+# @router.post("/reset-password/", status_code=status.HTTP_200_OK)  # TODO: implement crud
+# async def reset_password(request_data: ResetPasswordRequestSchema, db: Annotated[AsyncSession, Depends(get_db)]):
+#     token_hash = hash_reset_token(request_data.token)
+#     result = await db.execute(
+#         select(models.PasswordResetToken).where(
+#             models.PasswordResetToken.token_hash == token_hash,
+#         ),
+#     )
+#     reset_token = result.scalars().first()
+#     if not reset_token:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Invalid or expired reset token",
+#         )
+#     if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
+#         await db.delete(reset_token)
+#         await db.commit()
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Invalid or expired reset token",
+#         )
+#     result = await db.execute(
+#         select(models.Customer).where(models.Customer.id == reset_token.customer_id),
+#     )
+#     customer = result.scalars().first()
+#     if not customer:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Invalid or expired reset token",
+#         )
+#     castomer.password_hash = hash_password(request_data.new_password)
+#     await db.execute(
+#         sql_delete(models.PasswordResetToken).where(models.PasswordResetToken.customer_id == customer.id),
+#     )
+#     await db.commit()
+#     return {"message": "Password reset successfully. You can now log in with your new password."}
+#
+#
+# @router.patch("/me/password/", status_code=status.HTTP_200_OK)  # TODO: implement crud
+# async def change_password(
+#     password_data: ChangePasswordRequestSchema,
+#     current_user: CurrentUser,
+#     db: Annotated[AsyncSession, Depends(get_db)],
+# ):
+#     if not verify_password(password_data.current_password, current_user.password_hash):
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Current password is incorrect",
+#         )
+#     current_user.password_hash = hash_password(password_data.new_password)
+#     await db.execute(
+#         sql_delete(models.PasswordResetToken).where(models.PasswordResetToken.user_id == current_user.id),
+#     )
+#     await db.commit()
+#     return {"message": "Password changed successfully"}
 
 
 @router.get("/{customer_id}/", response_model=CustomerPublicSchema)
