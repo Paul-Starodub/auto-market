@@ -6,7 +6,7 @@ A modern RESTful API system for managing an automotive marketplace. Built with F
 
 - **Asynchronous Architecture** - leveraging SQLAlchemy async and FastAPI for maximum performance
 - **JWT Authentication** - secured endpoints with access/refresh token system
-- **Email Notifications** - welcome emails for new users with background tasks
+- **Email Notifications** - welcome emails and password-reset emails (background tasks)
 - **Image Management** - upload, processing, and optimization of car and profile images
 - **CategorySchema System** - organize cars by categories with pagination support
 - **User Profiles** - extended profile system with bio and avatars
@@ -78,6 +78,12 @@ EMAIL__HOST_USER=
 EMAIL__HOST_PASSWORD=
 EMAIL__USE_TLS=False
 EMAIL__FROM_EMAIL=noreply@automarket.com
+
+# Frontend URL for password-reset links in email (optional; default in code)
+EMAIL__FRONTEND_URL=http://localhost:3000
+
+# Password reset token lifetime (minutes)
+RESET_TOKEN_EXPIRE_MINUTES=60
 ```
 
 > **⚠️ Important**: Use strong random strings for SECRET_KEY_ACCESS and SECRET_KEY_REFRESH in production
@@ -130,6 +136,9 @@ docker-compose down -v
 | POST | `/customers/refresh/` | RefreshSchema access token | ❌ |
 | POST | `/customers/logout/` | Logout (revoke refresh token) | ✅ |
 | GET | `/customers/me/` | Get current user data | ✅ |
+| POST | `/customers/forgot-password/` | Request password reset (always `202`; email sent if account exists) | ❌ |
+| POST | `/customers/reset-password/` | Set new password using token from email | ❌ |
+| PATCH | `/customers/me/password/` | Change password (current password required) | ✅ |
 | GET | `/customers/{customer_id}/` | Get public user data | ✅ |
 | PATCH | `/customers/{customer_id}/` | Update user data | ✅ |
 | DELETE | `/customers/{customer_id}/` | Delete account | ✅ |
@@ -198,6 +207,26 @@ curl -X POST "http://localhost:8000/api/customers/login/" \
 #   "refresh_token": "eyJhbGc...",
 #   "token_type": "bearer"
 # }
+```
+
+### Password reset
+
+```bash
+# Request reset (use email registered in the system)
+curl -X POST "http://localhost:8000/api/customers/forgot-password/" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "john@example.com"}'
+
+# Complete reset with token from email (plain text + link body)
+curl -X POST "http://localhost:8000/api/customers/reset-password/" \
+  -H "Content-Type: application/json" \
+  -d '{"token": "TOKEN_FROM_EMAIL", "new_password": "NewSecurePass123!"}'
+
+# Change password while logged in
+curl -X PATCH "http://localhost:8000/api/customers/me/password/" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"current_password": "SecurePass123!", "new_password": "NewSecurePass123!"}'
 ```
 
 ### Working with Cars
@@ -289,6 +318,12 @@ curl -X POST "http://localhost:8000/api/categories/" \
 - `expires_at` - Expiration timestamp
 - `customer_id` - FK to customer
 
+**PasswordResetTokens**
+- `id` - Primary key
+- `token_hash` - SHA-256 hash of the raw token sent by email
+- `expires_at` - Expiration timestamp
+- `customer_id` - FK to customer
+
 **CustomerCar** (Customer-CarSchema Relationship)
 - `customer_id` - FK to customer
 - `car_id` - FK to car
@@ -305,7 +340,7 @@ curl -X POST "http://localhost:8000/api/categories/" \
 
 ## 📧 Email System
 
-The application sends welcome emails to new users using FastAPI's BackgroundTasks and aiosmtplib for async email delivery.
+The application sends welcome emails to new users and password-reset emails (HTML template `templates/email/password_reset.html`) using FastAPI's `BackgroundTasks` and aiosmtplib.
 
 ### Email Configuration
 
@@ -361,9 +396,12 @@ auto-market/
 │   ├── versions/               # Migration scripts
 │   ├── env.py                  # Alembic environment config
 │   └── script.py.mako          # Migration template
+├── templates/                  # Jinja2 templates (e.g. password reset HTML)
+│   └── email/
 ├── mailing/                    # Email functionality
 │   ├── send_email.py           # Core async email sending
-│   └── send_welcome_email.py  # Welcome email template
+│   ├── send_welcome_email.py   # Welcome email
+│   └── send_password_reset_email.py  # Password reset email
 ├── src/
 │   ├── core/                   # Core application configuration
 │   │   └── config.py           # Settings and environment variables
