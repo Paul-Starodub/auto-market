@@ -5,12 +5,14 @@ import aiosmtplib
 from src.core.config import settings
 
 
-async def send_email(recipient: str, subject: str, body: str) -> None:
+async def send_email(recipient: str, subject: str, body: str, html_content: str | None = None) -> None:
     message = EmailMessage()
     message["From"] = settings.email.FROM_EMAIL
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(body)
+    if html_content:
+        message.add_alternative(html_content, subtype="html")
 
     await aiosmtplib.send(
         message,

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, UTC
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String, DateTime, ForeignKey
@@ -22,6 +22,9 @@ class Customer(Base):
     profile: Mapped["Profile"] = relationship(back_populates="customer", cascade="all, delete-orphan")
     cars: Mapped[list["CustomerCar"]] = relationship(back_populates="customer", cascade="all, delete-orphan")
     refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
+        back_populates="customer", cascade="all, delete-orphan"
+    )
+    reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
         back_populates="customer", cascade="all, delete-orphan"
     )
 
@@ -77,3 +80,15 @@ class RefreshTokenModel(Base):
 
     def __repr__(self) -> str:
         return f"<RefreshTokenModel(id={self.id}, token={self.token}, expires_at={self.expires_at})>"
+
+
+class PasswordResetToken(CustomerRelationMixin, Base):
+    __tablename__ = "password_reset_tokens"
+    _customer_back_populate = "reset_tokens"
+
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+
+    def __repr__(self) -> str:
+        return f"<PasswordResetToken(id={self.id}, token_hash={self.token_hash}, expires_at={self.expires_at}, created_at={self.created_at})>"

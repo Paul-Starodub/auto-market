@@ -125,3 +125,24 @@ async def update_profile(db: AsyncSession, profile, data):
 async def delete_profile(db: AsyncSession, profile):
     await db.delete(profile)
     await db.commit()
+
+
+async def delete_password_reset_token_by_user(db: AsyncSession, customer_id: int) -> None:
+    await db.execute(delete(database.PasswordResetToken).where(database.PasswordResetToken.customer_id == customer_id))
+    await db.commit()
+
+
+async def create_password_reset_token(
+    db: AsyncSession, customer_id: int, token_hash: str, expires_at: datetime
+) -> database.PasswordResetToken:
+    reset_token = database.PasswordResetToken(customer_id=customer_id, token_hash=token_hash, expires_at=expires_at)
+    db.add(reset_token)
+    await db.commit()
+    return reset_token
+
+
+async def get_password_reset_token_by_hash(db: AsyncSession, token_hash: str) -> database.PasswordResetToken | None:
+    result = await db.execute(
+        select(database.PasswordResetToken).where(database.PasswordResetToken.token_hash == token_hash)
+    )
+    return result.scalars().first()
