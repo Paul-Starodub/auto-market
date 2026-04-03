@@ -75,8 +75,7 @@ async def login(
     except SQLAlchemyError:
         await db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error occurred while processing the request.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="An error occurred while processing the request."
         )
     jwt_access_token = jwt_manager.create_access_token({"sub": str(customer.id)})
     return TokenSchema(access_token=jwt_access_token, refresh_token=jwt_refresh_token)
@@ -94,10 +93,7 @@ async def refresh_tokens(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
     db_token = await customers_crud.get_refresh_token(db=db, token=refresh_token)
     if not db_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Refresh token not found",
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token not found")
     if db_token.expires_at < datetime.now(UTC):
         await customers_crud.delete_refresh_token(db=db, token=refresh_token)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
@@ -148,61 +144,36 @@ async def forgot_password(
     return {"message": "If an account exists with this email, you will receive password reset instructions."}
 
 
-# @router.post("/reset-password/", status_code=status.HTTP_200_OK)  # TODO: implement crud
-# async def reset_password(request_data: ResetPasswordRequestSchema, db: Annotated[AsyncSession, Depends(get_db)]):
-#     token_hash = hash_reset_token(request_data.token)
-#     result = await db.execute(
-#         select(models.PasswordResetToken).where(
-#             models.PasswordResetToken.token_hash == token_hash,
-#         ),
-#     )
-#     reset_token = result.scalars().first()
-#     if not reset_token:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Invalid or expired reset token",
-#         )
-#     if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
-#         await db.delete(reset_token)
-#         await db.commit()
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Invalid or expired reset token",
-#         )
-#     result = await db.execute(
-#         select(models.Customer).where(models.Customer.id == reset_token.customer_id),
-#     )
-#     customer = result.scalars().first()
-#     if not customer:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Invalid or expired reset token",
-#         )
-#     castomer.password_hash = hash_password(request_data.new_password)
-#     await db.execute(
-#         sql_delete(models.PasswordResetToken).where(models.PasswordResetToken.customer_id == customer.id),
-#     )
-#     await db.commit()
-#     return {"message": "Password reset successfully. You can now log in with your new password."}
-#
-#
-# @router.patch("/me/password/", status_code=status.HTTP_200_OK)  # TODO: implement crud
-# async def change_password(
-#     password_data: ChangePasswordRequestSchema,
-#     current_user: CurrentUser,
-#     db: Annotated[AsyncSession, Depends(get_db)],
-# ):
-#     if not verify_password(password_data.current_password, current_user.password_hash):
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Current password is incorrect",
-#         )
-#     current_user.password_hash = hash_password(password_data.new_password)
-#     await db.execute(
-#         sql_delete(models.PasswordResetToken).where(models.PasswordResetToken.user_id == current_user.id),
-#     )
-#     await db.commit()
-#     return {"message": "Password changed successfully"}
+@router.post("/reset-password/", status_code=status.HTTP_200_OK)
+async def reset_password(request_data: ResetPasswordRequestSchema, db: Annotated[AsyncSession, Depends(get_db)]):
+    token_hash = hash_reset_token(request_data.token)
+    reset_token = await customers_crud.get_password_reset_token_by_hash(db=db, token_hash=token_hash)
+    if not reset_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
+    if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
+        await customers_crud.delete_password_reset_token_by_user(db=db, customer_id=reset_token.customer_id)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
+    customer = await customers_crud.get_customer_by_id(db=db, customer_id=reset_token.customer_id)
+    if not customer:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
+    customer.password_hash = hash_password(request_data.new_password)
+    await customers_crud.delete_password_reset_token_by_user(db=db, customer_id=customer.id)
+    await db.commit()
+    return {"message": "Password reset successfully. You can now log in with your new password."}
+
+
+@router.patch("/me/password/", status_code=status.HTTP_200_OK)
+async def change_password(
+    password_data: ChangePasswordRequestSchema,
+    current_customer: CurrentCustomer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    if not verify_password(password_data.current_password, current_customer.password_hash):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+    current_customer.password_hash = hash_password(password_data.new_password)
+    await customers_crud.delete_password_reset_token_by_user(db, current_customer.id)
+    await db.commit()
+    return {"message": "Password changed successfully"}
 
 
 @router.get("/{customer_id}/", response_model=CustomerPublicSchema)
@@ -255,10 +226,7 @@ async def delete_customer(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     if customer_id != current_customer.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this customer",
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this customer")
     customer = await customers_crud.get_customer_by_id(db=db, customer_id=customer_id)
     if not customer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
@@ -274,8 +242,7 @@ async def upload_customer_picture(
 ):
     if current_customer.id != customer_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to update this customer's picture",
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this customer's picture"
         )
     content = await file.read()
     if len(content) > settings.max_upload_size_bytes:
@@ -307,15 +274,11 @@ async def delete_customer_picture(
 ):
     if current_customer.id != customer_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this customer's picture",
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this customer's picture"
         )
     old_filename = current_customer.image_file
     if old_filename is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No picture to delete",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No picture to delete")
     current_customer.image_file = None
     await db.commit()
     await db.refresh(current_customer)
