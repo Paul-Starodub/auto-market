@@ -14,6 +14,8 @@ class EmailConfig(BaseModel):
     USE_TLS: bool = False
     FROM_EMAIL: str = "noreply@automarket.com"
 
+    frontend_url: str = "http://localhost:8000"
+
 
 class RunConfig(BaseModel):
     host: str = "0.0.0.0"
@@ -48,6 +50,8 @@ class Settings(BaseSettings):
     JWT_SIGNING_ALGORITHM: str
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+
+    reset_token_expire_minutes: int = 60
 
     max_upload_size_bytes: int = 5 * 1024 * 1024
     entities_per_page: int = 10
