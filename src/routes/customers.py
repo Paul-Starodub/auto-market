@@ -150,7 +150,7 @@ async def reset_password(request_data: ResetPasswordRequestSchema, db: Annotated
     reset_token = await customers_crud.get_password_reset_token_by_hash(db=db, token_hash=token_hash)
     if not reset_token:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
-    if reset_token.expires_at.replace(tzinfo=UTC) < datetime.now(UTC):
+    if reset_token.expires_at < datetime.now(UTC):
         await customers_crud.delete_password_reset_token_by_user(db=db, customer_id=reset_token.customer_id)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token")
     customer = await customers_crud.get_customer_by_id(db=db, customer_id=reset_token.customer_id)
